@@ -1,0 +1,292 @@
+1.封装
+class A:
+    def __init__(self):
+        self.__p1=100
+        print('self.__p1',self.__p1)
+
+    def __m(self):
+        print('A.__m方法被调用')
+    def dowork(self):
+        self.__m()
+        print('dowork内,self.__p1=',self.__p1)
+class B(A):
+    def test(self):
+        self.__m()    ###出错
+        print(self.__p1)　　　###出错
+
+a=A()
+# print(a.__p1)   #不能调用
+# a.__m()　　　　　　＃不能调用
+a.dowork()
+a.test()    #出错
+######################################
+self.__p1 100
+A.__m方法被调用
+dowork内,self.__p1= 100
+########################################################
+2.运行多态（来自继承）
+class Shape:
+    def draw(self):
+        print('shape.draw被调用')
+class Point(Shape):
+    def draw(self):
+        print('print.draw被调用')
+class Circle(Point):
+    def draw(self):
+        print('circle.draw被调用')
+def my_draw(s):  ########(如果是c,则会有类型+变量,就知道调用哪一个，而这个不知道)
+    s.draw()　　########这个地方就是多态中的动态
+s1=Circle()
+s2=Point()
+my_draw(s2)
+my_draw(s1)
+
+print.draw被调用
+circle.draw被调用
+（运行的时候决定调用谁）
+------------------------------------------------------------------------------
+3.多继承
+class Car:
+    def run(self,speed):
+        print('汽车以',speed,'km/h的速度行驶')
+class Plane:
+    def fly(self,height):
+        print('飞机以海拔',height,'米高度飞行')
+class PlaneCar(Car,Plane):
+    pass
+
+p1=PlaneCar()
+p1.fly(10000)
+p1.run(300)
+
+飞机以海拔 10000 米高度飞行
+汽车以 300 km/h的速度行驶
+----------------------------------------------------------------------------
+4多继承标识问题
+class A:
+    def n(self):
+        print('A.n()被调用')
+
+class B:
+    def n(self):
+        print('B.n()被调用')
+# class AB(A,B):
+#     pass
+class AB(B,A):
+    pass
+ab=AB()
+ab.n()
+
+B.n()被调用
+----------------------------------------------------------------------
+菱形继承：
+class A:
+    def go(self):
+        print('A被调用')
+
+class B(A):
+    def go(self):
+        print('B被调用')
+        super().go()   #####为什么是c
+class C(A):
+    def go(self):
+        print('C被调用')
+        super().go()
+class D(B,C):
+    def go(self):
+        print('D被调用')
+        super().go()
+for i in D.__mro__:
+    print(i)
+d=D()
+d.go()
+
+<class '__main__.D'>
+<class '__main__.B'>
+<class '__main__.C'>
+<class '__main__.A'>
+<class 'object'>
+D被调用
+B被调用
+C被调用#####################为什么只打印了一次
+A被调用
+（每个类都是首先找自身，接着找上一层的顺序）
+-------------------------------------------------------------
+
+s="I'm a \'Teacher\'"
+s1=str(s)
+print(s1)
+s2=repr(s)
+print(s2)
+
+I'm a 'Teacher'
+"I'm a 'Teacher'"
+------------------------------------------------
+class MyNumber:
+    def __init__(self,value):
+        self.data=value
+    def __str__(self):
+        print('MyNumber类的__str__被调用')###看看把这个函数删了会如何
+        return '数字%d' % self.data
+    def __repr__(self):
+        return 'repr的数字%d' % self.data#####同样
+
+n1=MyNumber(100)
+s1=str(n1)
+print(s1)
+s2=repr(n1)
+print(s2)
+
+MyNumber类的__str__被调用
+数字100
+repr的数字100
+--------------------------------------------------------
+class Mylist:
+    def __init__(self,iterable=()):
+        self.data=[x for x in iterable]
+    # def print_iter(self):
+    #     print(self.data)
+    def __repr__(self):
+        return 'Mylist(%s)' % self.data  #####这句也需要执行
+    def __len__(self):
+        # return len(self.data)
+        return self.data.__len__()
+    def __abs__(self):
+        lst=[abs(x) for x in self.data]
+        l=Mylist(lst)#############这里又执行了一次
+        return l
+        # return [abs(x) for x in self.data]
+myl=Mylist([1,-2,3,-4])
+# myl.print_iter()
+print(myl)
+print('myl的长度是',len(myl))
+myl2=Mylist()
+print(myl2)
+myl3=Mylist([1,-2,3,-4])
+print('myl3的绝对值是',abs(myl3))
+--------------------------------------------
+Mylist([1, -2, 3, -4])
+myl的长度是 4
+Mylist([])
+myl3的绝对值是 [1, 2, 3, 4]
+--------------------------------------
+Mylist([1, -2, 3, -4])
+myl的长度是 4
+Mylist([])
+myl3的绝对值是 Mylist([1, 2, 3, 4])#####多了几个字
+--------------------------------------------
+class MyInteger:
+    def __init__(self,value):
+        self.data=int(value)
+    def __int__(self):
+        return self.data
+
+a1=MyInteger('100')
+i=a1.__int__()
+# i=a1.int()   错的
+print(i)
+-------------------------双下换线两种调用方法  方法名(obj)或obj.__方法名__
+不是双下换线的就是obj.方法名
+-------------------------------------------------------
+class MyInteger:
+    def __init__(self,value):
+        self.data=int(value)
+    def __int__(self):
+        return int(self.data)
+    def __float__(self):
+        return float(self.data)
+    def __complex__(self):
+        return complex(self.data)
+    def __bool__(self):
+        return bool(self.data)
+
+a1=MyInteger('100')
+i=int(a1)   #####等同于a1.__int__()
+# i=a1.int()   错的
+print(i)
+
+i=float(a1)
+print(i)
+
+i=complex(a1)
+print(i)
+
+i=bool(a1)
+print(i)
+---------------------------------------
+100
+100.0
+(100+0j)
+True
+#####################################################################
+迭代器
+class Mylist:
+    def __init__(self,iterable=()):
+        self.data=[x for x in iterable]
+    def __repr__(self):
+        return 'Mylist(%s)' % self.data
+    def __iter__(self):
+        return Mylist_Iterator(self.data)
+class Mylist_Iterator:
+    def __init__(self,data):
+        self.data=data
+        self.cur_index=0
+    def __next__(self):
+        if self.cur_index>=len(self.data):
+            raise StopIteration
+
+        r=self.data[self.cur_index]
+        self.cur_index+=1
+
+        return r
+L=Mylist('ABCD')
+print(L)
+for x in L:
+    print(x)
+
+Mylist(['A', 'B', 'C', 'D'])
+A
+B
+C
+D
+#######################################################
+# bool.py
+
+class A:
+    # def __bool__(self):
+    #     print("__bool__方法被调用")
+    #     return False
+    def __len__(self):
+        print('__len__方法被调用')
+        return 5
+a = A()
+
+print(bool(a))  # False
+if a:
+    print("a为真值")
+else:
+    print('a为假值')
+
+------------------------------------------------------
+重写len和abs，但是交换除问题了
+class Mylist:
+    def __init__(self,iterable=()):
+        self.data=list(iterable)
+    def __repr__(self):
+        return 'Mylist(%s)' % self.data
+    def __len__(self):
+        # return len(self.data)
+        return [abs(x) for x in self.data]
+    def __abs__(self):
+        # return [abs(x) for x in self.data]
+        return len(self.data)
+a=Mylist([1,8,9,4,5,-4,-9])
+print(len(a))
+print(abs(a))
+---------------------------------------------------
+7
+Traceback (most recent call last):
+  File "/home/tarena/test/demo/demo1.py", line 38, in <module>
+    print(len(a))
+TypeError: 'list' object cannot be interpreted as an integer
+-------------------------------------------------------------

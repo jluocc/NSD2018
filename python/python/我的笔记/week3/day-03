@@ -1,0 +1,271 @@
+dir（）函数 查看属性
+属性就是变量
+import math
+>>> dir(math)
+用from math import *不能用dir（math）查看
+自定义模块
+	要求：
+	模块文件名后缀必须为.py结尾
+	模块文件名必须是合法的标识符（不能数字，中文等，满足变量名规则）
+	避免名称和内建模块名冲突
+导入方式：
+	import自定义模块名
+	from 自定义模块名 import 属性
+	from 自定义模块名 import *
+	（理清这三种的区别）
+
+自定义模块导入其他模块必须要在同一个文件目录下
+import os  （ctrl 点住import ，鼠标单击os，可以看到模块代码，不过math不行，因为是c编写的）
+
+import语句 搜索模块的路径顺序
+1.搜索内建模块
+2.搜索程序运行时的路径（当前工作目录）
+3.搜索sys.path提供的路径
+	可以在sys.path里添加自定义的路径
+如
+	import sys
+	sys.path.append('/home/tarena')
+	import demo1
+
+>>> sys.path  (将文件移动到这些文件里需要超级权限)
+['', '/usr/lib/python35.zip', '/usr/lib/python3.5', '/usr/lib/python3.5/plat-x86_64-linux-gnu', '/usr/lib/python3.5/lib-dynload', '/home/tarena/.local/lib/python3.5/site-packages', '/usr/local/lib/python3.5/dist-packages', '/usr/lib/python3/dist-packages']
+
+模块化编程的优点；
+1.有利于多人合作开发
+2.使代码更加易于维护
+3.提高代码的复用率
+4.模块化编程有利于解决函数名和变量名冲突（模块内的变量的作用域为模块内为全局）
+
+模块的加载过程
+	在模块导入时，模块的所有语句会执行
+	如果一个模块已经导入，则再次导入时不会重新执行模块内的语句
+
+模块的重新加载
+import demo1
+import imp
+imp.reload(demo1)
+
+模块被导入和执行的过程：
+	1.搜索相关的路径找模块文件.py
+	2.判断是否有此模块对应的.pyc文件，如果pyc文件比.py文件新则直接加载.pyc文件，
+	否则用.py文件重新生成.pyc文件并加载
+pyc 模块的编译
+               编译            执行
+	demo1.py------->demo1.pyc------>python3  （和c不一样，c的直接是cpu能看懂，这个只是python能看懂）
+	demo1.pyc提高python导入执行速度
+
+模块的预值属性
+__doc__属性绑定模块的文档字符串
+	模块的文档字符串是模块内第一个没有赋值给任何变量的字符串
+>>> import demo1
+mydod模块别加载
+>>> help(demo1)
+
+>>> demo1.__doc__
+'这是一个模块文档查看\n\n打法时间到返回\n上的花费可'
+>>> dir(demo1)
+['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__spec__', 'myfac', 'mysum', 'name1', 'name2']
+
+__file__属性
+	__file__用来绑定模块所对应的文件路径名（内建模块没有）
+
+__name__属性(直接打印)
+作用：
+	1。记录模块名
+	2.用来判断是否为主模块
+	说明：
+		1.当此模块为主模块运行时，__name__绑定'__main__'
+		（python3 模块1[模块1的__name__就是__main__]，如果是用模块导入的，__name__是该模块的名字）
+		2.当此模块不是主模块运行，而是被其他模块导入时，此模块名为模块文件，
+		py前面的模块名
+		如：demo1.py的模块名为demo1
+		注：主模块是指最先被python解释执行器执行的模块
+
+	（常用法，用if __name__='__main__'：语句）
+
+模块内的__all__列表
+__all__列表是一个用来储存可导入属性的字符串列表
+作用:
+	限制用from xxx import *语句导入时导入部分属性，而不是全部属性
+__all__=['f1','var1']
+def f1():
+    pass
+def f2():
+    pass
+def f3():
+    pass
+var1='aaa'
+var2='bbb'
+
+from demo05 import *
+dir()
+['__builtins__', '__doc__', '__loader__', '__name__', '__package__', '__spec__', 'f1', 'var1']
+（保存更改后要重新进入交互模式）
+
+模块的隐藏属性：
+	模块中以'_'（单双下划线）开头的属性，在from  xxx import *导入时将不被导入，
+	通常称这些属性为隐藏属性
+def _f1():
+    pass
+def _f2():
+    pass
+def f3():
+    pass
+_var1='aaa'
+var2='bbb'
+['__builtins__', '__doc__', '__loader__', '__name__', '__package__', '__spec__', 'f3', 'var2']
+
+随机模块：random
+作用；用于模拟或生成随机输出的模块（说明，并不是真正意义上的生成随机数，模拟随机）
+
+R.random()	返回一个[0, 1) 之间的随机实数（包含0）
+
+>>> t=(3,5,7,3)
+>>> random.choice(t)
+5
+>>> random.sample(t,2)
+[3, 3]
+>>> random.sample(t,3)  （只是不能生成同一个数，但是数可以同样）
+[3, 5, 3]
+
+if  x>y:
+    print('你猜小l')
+    count+=1
+##################count可以放在if的前面
+
+有序的可以折半查找（效率为log2（n）对数）
+
+包（模块包）package
+包是将模块以文件夹的组织形式进行分组管理的方法
+作用：将一系列模块进行分类管理，有利于防止名字冲突
+可以在需要时加载一个或部分模块而不是全部模块
+tarena@tedu:~/test$ tree mypack
+tarena@tedu:~/test/demo$ cd ..
+tarena@tedu:~/test$ mkdir mypack
+tarena@tedu:~/test$ cd mypack
+tarena@tedu:~/test/mypack$ touch __init__.py menu.py
+tarena@tedu:~/test/mypack$ mkdir games office
+tarena@tedu:~/test/mypack$ cd games
+tarena@tedu:~/test/mypack/games$ touch __init__.py contra.py supermario.py tanks.py
+tarena@tedu:~/test/mypack/games$ cd ..
+tarena@tedu:~/test/mypack$ cd office
+tarena@tedu:~/test/mypack/office$ touch __init__.py 
+mypack
+├── games
+│   ├── contra.py
+│   ├── __init__.py
+│   ├── supermario.py
+│   └── tanks.py
+├── __init__.py（包里必须有的文件，每个文件夹都有）
+├── menu.py
+└── office
+    └── __init__.py
+contra.py
+def play():
+    print('正在玩　魂斗罗')
+print('魂斗罗被加载')
+
+tanks.py
+def play():
+    print('正在玩　坦克大战')
+print('坦克大战被加载')
+
+supermario.py
+def play():
+    print('正在玩　超级玛丽')
+print('超级玛丽被加载')
+
+menu.py
+def show_menu():
+    print('1 魂斗罗')
+    print('2 超级玛丽')
+    print('3 斗地主')
+    print('4 坦克大战')
+    print('5 world')
+
+test_mypack.py(和mypack同级的)
+import mypack.menu
+mypack.menu.show_menu()
+import mypack.games.contra
+mypack.games.contra.play()
+
+包的导入：
+同模块的导入规则基本相同：
+语法：
+import 包名  [as 包别名]
+import 包名.模块名 [as 模块新名]
+import 包名.子包名.模块名 [as 模块新名]
+...
+from 包名 import 模块名 [as 模块新名]
+from 包名.子包名 import 模块名 [as 模块新名]
+from 包名.子包名.模块名 import 属性名 [as 属性新名]  （import后面只有一个）
+...
+from 包名 import *
+form 包名.模块名 import *
+
+__init__.py文件
+此文件是常规包内必须存在的文件，此文件会在包被导入时自动调用
+作用：
+	编写此包的内容
+	在内部填写包的文档字符串
+	在__init__.py内可以加载此包所依赖的一些其他模块
+	示例夹：mypack/__init__.py
+>>> import mypack
+>>> help(mypack)
+################################################
+>>> import mypack
+mypack/__init__被执行
+>>> mypack.mytest
+<function mytest at 0x7f0313e0d2f0>
+>>> mypack.mytest() ##################包.函数
+sdhfkese
+##############################################
+'''符合我咖啡和ｓａｕｉｓｅｆｈｈ
+ｓｄｆｉｕｅｈ适当放宽几开设的返回
+ｙｕｉｆｓｄｙ老师的话发'''
+def mytest():
+    print('sdhfkese')
+print('mypack/__init__被执行')
+#######################################在__init__.py下
+
+包内的__all__列表
+作用：
+	用来记录此包中有那些子包或模块在from
+	import *语句导入时需要被导入
+说明：
+	__all__列表只对from  xxx import *语句中起作用
+如：（games下的__init__.py文件）
+__all__=['contra','tanks'] （不写默认一个都不导入）
+print('mypack下的games子包被导入')
+
+>>> from mypack.games import *
+mypack/__init__被执行
+mypack下的games子包被导入
+魂斗罗被加载
+坦克大战被加载
+>>> dir()
+['__builtins__', '__doc__', '__loader__', '__name__', '__package__', '__spec__', 'contra', 'tanks']
+
+包的相对导入
+	包的相对导入是指包内模块的相互导入
+	语法：
+	from相对路径包或模块import属性或模块名
+	或
+	from 相对路径包或模块import *
+	相对路径：
+	~ 代表当前目录
+	.. 代表上一级目录
+	...代表上二级目录
+	....以此类推
+注：相对导入时不能超出包的外部
+（需要一个最外层和包同级的.py文件来调用相对包内层的去导入外层的）
+
+注意避免循环导入：你导入我，我导入你
+
+包的加载路径：
+	1.当前工作路径；
+	2.sys.path提供的路径
+		模块的加载路径设置方法：sys.path（'新路径'）
+
+
+

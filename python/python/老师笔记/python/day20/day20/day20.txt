@@ -1,0 +1,253 @@
+day19回顾:
+  issubclass(cls, 类或元组)  判断类的父子关系
+
+面向对象编程语句的特征:
+  封装
+    __ 变量(实例变量(实例属性),类变量(类属性))
+  继承
+  多态
+
+多继承
+  支持多继承的语言(C++,Python)
+  方法名冲突
+
+class A:
+    pass
+
+__mro__ 类属性
+
+函数重写
+  让自定义的类添加相应的方法,让此类的对象能够使用内建函数进行操作
+    repr
+    str
+    len
+    abs
+    round
+    reversed
+    int
+    float
+    bool
+    complex
+    next(it)    __next__(self)
+    iter(obj)   __iter__(self)
+
+
+day20笔记 :
+  对象的属性管理函数
+    getattr(obj, name[,default])
+    hasattr(obj, name)
+    setattr(obj, name, value)
+    delattr(obj, name)
+  示例:
+    class Dog:
+       pass
+    d = Dog()
+    d.color = "白色"
+    c = getattr(d, "color")  # d.color
+    hasattr(d,"color") # True
+    setattr(d,'kinds', '导盲犬')
+    delattr(d, 'kinds')
+
+
+异常(高级)
+  回顾:
+    try-except
+    try-finally
+    raise
+    assert
+
+with语句
+  语法:
+    with 表达式1 [as 变量1],表达式2 [as 变量2], ... :
+       语句块
+  作用:
+    使用对资源进行访问的场合,确保使用过程中,不算是否发生异常,都会执行必须的'清理'操作,并释放资源.
+      如: 文件使用后自动关闭,线程中锁的自动获取和释放等(线程后面会学)
+  说明:
+    with语句并不会改变异常的状态(同try-finally类似)
+
+  示例见:
+    with.py
+
+环境管理器:
+  1. 类内有__enter__和 __exit__实例方法的类创建的实例被称为环境管理器
+  2. 能够用with进行管理的对象必须是环境管理器
+  3. __enter__方法将在进入with语句时被调用,且返回由as 变量 管理的对象
+  4. __exit__方法将在离开with语句时被调用,且可以用形参来判断离开with语句时的状态
+
+  示例见:
+    context.py
+
+
+运算符重载 overload
+  什么是运算符重载
+    让自定义的类生成的对象(实例) 能够使用运算符进行操作
+  作用:
+    让程序简洁易读
+    对自定义的对象将运算符赋序新的规则
+  说明:
+    运算符重载方法的参数的固定的含义,不建议改变运算符的原的含义
+
+算术运算符重载方法
+方法名               运算符和表达式    说明
+__add__(self, rhs)      self +  rhs 加法
+__sub__(self, rhs)      self -  rhs 减法
+__mul__(self, rhs)      self *  rhs 乘法
+__truediv__(self, rhs)  self /  rhs 除法
+__floordiv__(self, rhs) self // rhs 地板除
+__mod__(self, rhs)      self %  rhs 求余
+__pow__(self, rhs)      self ** rhs 幂运算
+  注: rhs (right hand side ) 右手边
+
+示例见:
+  mynumber.py
+
+练习:
+  实现两个自定义的列表相加操作
+    class MyList:
+        ...  # 此处代码自己实现
+    
+    L1 = MyList(range(1, 4))
+    L2 = MyList([4, 5, 6])
+    L3 = L1 + L2
+    print(L3)  # MyList([1, 2, 3, 4, 5, 6])
+    L4 = L2 + L1
+    print(L4)  # MyList([4, 5, 6, 1, 2, 3])
+    L5 = L1 * 3
+    print(L5)  # MyList([1,2,3,1,2,3,1,2,3])
+
+反向算术运算符的重载:
+  当运算符的左侧为内建类型,右侧为自定义类型进行算术运算时,会出现TypeErorr错误
+  因无法修改内建类型的代码实现运算符重载,此时需要使用反向算术运算符的重载来完成重载
+
+反向算术运算符重载方法
+方法名               运算符和表达式    说明
+__radd__(self, lhs)      lhs +  self 加法
+__rsub__(self, lhs)      lhs -  self 减法
+__rmul__(self, lhs)      lhs *  self 乘法
+__rtruediv__(self, lhs)  lhs /  self 除法
+__rfloordiv__(self, lhs) lhs // self 地板除
+__rmod__(self, lhs)      lhs %  self 求余
+__rpow__(self, lhs)      lhs ** self 幂运算
+  注: lhs (left hand side ) 左手边
+
+复合赋值算术运算符的重载
+  以复合赋值算术运算符 x += y 为例,此运算符会优先调用x.__iadd__(y) 方法,如果没有__iadd__方法时会将复合赋值运算符拆解为 x = x + y, 然后调用 x = x.__add__(y) 方法,如果再不存在__add__方法,则会触发TypeError异常
+    其它复合赋值算术运算符有相同的规则
+
+方法名               运算符和表达式    说明
+__iadd__(self, rhs)      self +=  rhs 加法
+__isub__(self, rhs)      self -=  rhs 减法
+__imul__(self, rhs)      self *=  rhs 乘法
+__itruediv__(self, rhs)  self /=  rhs 除法
+__ifloordiv__(self, rhs) self //= rhs 地板除
+__imod__(self, rhs)      self %=  rhs 求余
+__ipow__(self, rhs)      self **= rhs 幂运算
+  注: rhs (right hand side ) 右手边
+
+比较运算符的重载:
+方法名               运算符和表达式    说明
+__lt__(self, rhs)    self <  rhs   小于
+__le__(self, rhs)    self <= rhs   小于等于
+__gt__(self, rhs)    self >  rhs   大于
+__ge__(self, rhs)    self >= rhs   大于等于
+__eq__(self, rhs)    self == rhs   等于
+__ne__(self, rhs)    self != rhs   不等于
+
+  注: 比较运算符通常返回布尔值True 或 False
+
+
+位运算符重载
+方法名               运算符和表达式    说明
+__and__(self, rhs)    self &  rhs   位与
+__or__(self, rhs)     self |  rhs   位或
+__xor__(self, rhs)    self ^  rhs   位异或
+__lshift__(self, rhs) self << rhs   左移
+__rshift__(self, rhs) self >> rhs   右移
+
+反向位运算符重载
+方法名               运算符和表达式    说明
+__rand__(self, lhs)   lhs  &  self   位与
+__ror__(self, lhs)    lhs  |  self   位或
+__rxor__(self, lhs)   lhs  ^  self   位异或
+__rlshift__(self, lhs)lhs  << self   左移
+__rrshift__(self, lhs)rhs  >> self   右移
+
+复合赋值位运算符重载
+方法名               运算符和表达式    说明
+__iand__(self, rhs)    self &=  rhs   位与
+__ior__(self, rhs)     self |=  rhs   位或
+__ixor__(self, rhs)    self ^=  rhs   位异或
+__ilshift__(self, rhs) self <<= rhs   左移
+__irshift__(self, rhs) self >>= rhs   右移
+
+
+一元运算符的重载
+方法名               运算符和表达式    说明
+ __neg__(self)       - self        负号
+ __pos__(self)       + self        正号
+ __invert__(self)    ~ self        取反
+
+一元运算符的重载语法
+  class 类名:
+      def __xxx__(self):
+          ....
+示例见:
+  mylist3.py
+
+in / not in 运算符重载
+  方法格式:
+    def __contains__(self, e):
+       ...
+  
+  #  e in self
+示例见:
+  mylist4.py
+
+索引和切片运算符的重载
+重载方法:
+  方法名            运算符和表达式  说明
+ __getitem__(self, i)    x=self[i]   取值
+ __setitem__(self, i, v) self[i]=v   赋值
+ __delitem__(self, i)    del self[i] 删除
+
+作用:
+  让自定义的类型的对象能够支持索引和切片操作
+示例见:
+  mylist5.py
+  mylist6.py
+
+slice构造函数:
+  作用:
+    用于创建一个slice切片对象,此对象存储一个切片的起始值,终止值,步长信息
+  格式:
+    slice(start=None, stop=None, step=None)
+slice的属性:
+  s.start  切片的起始值,默认为None
+  s.stop  切片的终止值,默认为None
+  s.step  切片的步长,默认为None
+
+特性属性 @property
+  实现其它语言所拥有的 getter 和 setter 功能
+
+  作用:
+    用来模拟(虚拟)一个属性
+    通过@property 装饰器可以对模拟的属性赋值和取值加以控制
+  示例见:
+    property.py
+
+练习:
+  实现有序集合类OrderSet 能实现两个集合的交集&, 并集|, 补集-, 对称补集^ == != 等操作.功能与集合相同
+  要求:  集合内部用list存储
+    如:
+      s1 = OrderSet([1, 2, 3, 4])
+      s2 = OrderSet([3, 4, 5])
+      print(s1 & s2)  # OrderSet([3, 4])
+      print(s1 | s2)  # OrderSet([1,2,3,4,5])
+      print(s1 ^ s2)  # OrderSet([1, 2, 5])
+      if OrderSet([1,2,3]) != s1:
+          print("不相等")
+      if 2 in s1:
+          print("2 在s1内")
+      else:
+          print("2不在s1内")

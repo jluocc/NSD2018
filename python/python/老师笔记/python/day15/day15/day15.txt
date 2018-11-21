@@ -1,0 +1,307 @@
+day14回顾:
+  异常 exception
+    错误
+    异常
+  异常相关的语句:
+    发出(触发/抛出)异常通知:
+      raise 语句
+      assert 语句
+    捕获异常:
+      try-except 语句
+        try:
+             .... 可以触发异常的语句
+        except 类型 as 变量名:
+            ...
+        except (类型2,类型3,...) as 变量名:
+            ...
+        except:  (通常放在所有except之后)
+            ...
+        else:
+            ...
+        finally:
+            ...
+    做必须要做的事儿(执行必须要执行语句)
+      try-finally语句
+        try:
+            ...
+        finally:
+            ...
+        
+  迭代器 iterator
+    iter(可迭代对象)  返回的是迭代器
+    next(迭代器)  从可迭代对象中取值
+       在没有数据时会触发StopIteration异常
+    
+
+day15 笔记:
+生成器 Generator (python2.5及之后)  
+  生成器是能够动态提供数据的可迭代对象
+  生成器是在运行时生成数据,与容器类不同,它通常不会在内存中保存大量的数据,而是现用现生成
+
+生成器有两种:
+   1. 生成器函数
+   2. 生成器表达式
+
+生成器函数:
+  含有yield语句的函数是生成器函数,此函数被调用将返回一个生成器对象
+    yield 翻译为(产生或生成)
+
+yield 语句
+  语法:
+    yield 表达式
+  说明:
+    yield 用于 def 函数中,目的是将此函数作用生成器函数使用
+    yield 用来生成数据 ,供迭代器的next(it)函数取值
+
+示例:
+  gen_function.py
+
+生器函数说明:
+  1. 生成器函数调用将返回一个生成器对象,生成器对象是可迭代对象
+  2. 在生成器函数内调用return语句会触发一个 StopIteration 异常(即生成数据结束)
+
+生成器函数的应用示例见:
+  myinteger.py
+
+练习:
+  写一个生成器函数 myeven(start, stop) 用来生成从start开始到stop结束区间内的一系列偶数(不包含stop)
+  如:
+    def myeven(start, stop):
+        ...  # 此处自己实现
+
+    evens = list(myeven(10, 20))
+    print(evens) # [10, 12, 14, 16, 18]
+    for x in myeven(5, 10):
+        print(x)  # 6  8
+    L = [x for x in myeven(0, 10)]
+    print(L) # [0, 2, 4, 6, 8]
+
+
+生成器表达式:
+  语法
+    (表达式 for 变量 in 可迭代对象 [if 真值表达式])
+  说明:
+    if 子句可以省略
+  作用:
+    用推导式形式创建一个新的生成器
+  示例:
+    gen = (x ** 2 for x in range(1, 5))
+    it = iter(gen)
+    next(it)  # 1
+    next(it)  # 4
+    next(it)  # 9
+    next(it)  # 16
+    next(it)  # StopIteration
+
+练习:
+  已知有列表:
+    L = [2, 3, 5, 7, 10, 15]
+  1) 写一个生成器函数,让此函数能动态提供数据,数据为原列表的数字的平方+1
+  2) 写一个生成器表达式,让此表达式能动态提供数据,数据依旧为原列表数字的平方+1
+  3) 生成一个列表,此列表内的数据为原列表的数字的平方+1
+
+
+看下列程序的输出结果有什么不同,为什么?
+  # 第一段程序
+  L = [2, 3, 5, 7]
+  L2 = [x * 10 for x in L]
+  it = iter(L2)
+  print(next(it))  # 20
+  L[1] = 30
+  print(next(it))  # 30
+
+  # 第二段程序
+  L = [2, 3, 5, 7]
+  L2 = (x * 10 for x in L)  # <-此处已修改
+  it = iter(L2)
+  print(next(it))  # 20
+  L[1] = 30
+  print(next(it))  # 300
+
+练习:
+  1. 写一个生成器函数,给出开始值begin,和终止值end,此生成器函数生成begin~end 范围内的全部素数(不包含end)
+    如:
+      def prime(begin, end):
+          ...
+
+      L = list(prime(10, 20))
+      print(L)  # [11, 13, 17, 19]
+
+迭代工具函数
+  作来生成一个个性化的可迭代对象
+
+函数  说明
+  zip(iter1[, iter2, ...]) 返回一个zip生成器对象,此对象用于生成元组,元组的数据分别来自于参数中的每个可迭代对象,生成元组的个数由最小的可迭代对象大小决定
+
+  enumerate(iterable, start=0) 返回一个enumerate生成器对象,此对象生成类型为(索引,值)的元组,默认索引从零开始,也可以用start指定
+
+  示例:
+    numbers = [10086, 10000, 10010,95588]
+    names = ['中国移动','中国电信','中国联通']
+    for t in zip(numbers, names):
+        print(t)
+
+    for n, m in zip(numbers, names):
+        print(m,'的客服电话是', n)
+
+    d = dict(zip(numbers, names))
+
+    for t in zip(numbers, names, range(1000)):
+        print(t)
+
+zip函数的实现(用生成器函数实现)
+  示例见:
+    myzip.py
+
+
+enumerate 示例
+   names = ['中国移动', '中国电信', '中国联通']
+   for t in enumerate(names):
+       print(t)  # (1, '中国移动'), ...
+
+练习:
+  写一个程序,读入任意行的文字,当输入空行时结束输入
+  打印带有行号的输入结果
+  如:
+     请输入: tarena<回车>
+     请输入: china<回车>
+     请输入: holiday<回车>
+     请输入: <回车>
+    输出如下:
+     第1行: tarena
+     第2行: china
+     第3行: holiday
+
+字节串和字节数组
+  回顾:
+    序列:
+      列表,元组,字符串,字节串,字节数组
+
+字节串(也叫字节序列) bytes
+  作用:
+    存储以字节为单位的数据
+  说明:
+    字节串是不可改变的序列
+
+字节 byte:
+  字节是0~255之间的整数,用来表示字节的取值
+
+位 bit:
+   1byte = 8bit
+
+创建空字节串的字面值:
+  b''
+  b""
+  b''''''
+  b''''''
+创建非空的字节串字面值
+  b'ABCD'
+  b"ABCD"
+  b'\x41\x42\x43\x44'
+  b'hello'
+  b'中文'  # 错的
+
+字节串构造函数 bytes
+  bytes()  生成一个空的字节串,等同于b''
+  bytes(整型可迭代对象)  # 用可迭代对象初始化一个字节串
+  bytes(整数n)  生成n个值为0的字节串
+  bytes(字符串, encoding='utf-8')  用字符串的转换编码生成一个字节串
+  
+示例:
+   b = bytes()  # b = b''
+   b = bytes(range(65, 70))  # b=b'ABCDE'
+   b = bytes(5)#b=b'\x00\x00\x00\x00\x00'
+   b = bytes('ABC', 'utf-8')  # b=b'ABC'
+   b = bytes("中文", 'utf-8')  # b=???
+
+bytes 的运算:
+  同其它的序列的运算规则相同
+    +  +=  *  *= 
+    < <= > >= == !=
+    in / not in 
+        b = b'abc123 ABC'
+        0x20 in b
+    索引和切片
+
+能用于字节串和字节数组的函数:
+  len(x), max(x), min(x), sum(x), any(x), all(x)
+
+bytes 和 str 的区别
+  bytes 存储字节(字节是0~255的整数)
+  str 存储unicode字符(字符是0~65536的整数)
+
+bytes 与 str 转换
+       编码(encode)
+    str ----------> bytes
+       b = s.encode(encoding='utf-8')
+    
+          解码(decode)
+    bytes ---------> str
+        s = b.decode(encoding='utf-8')
+示例:
+   s = '我是中文'
+   b = s.encode('utf-8')
+   s2 = b.decode('utf-8')
+
+字节数组 bytearray
+  可变的字节序列
+
+字节数组的构造函数 bytearray
+  bytearray()  生成一个空的字节数组
+  bytearray(整型可迭代对象)  # 用可迭代对象初始化一个字节数组
+  bytearray(整数n)  生成n个值为0的字节数组
+  bytearray(字符串, encoding='utf-8')  用字符串的转换编码生成一个字节数组
+
+运算:
+  运算规则同序列完全相同
+    + += * *=
+    < <= > >= == !=
+    in / not in
+    索引 / 切片
+    字节数组支持索引和切片的赋值操作,规则同列表的赋值规则完全相同
+
+字节串的方法见文档:
+    python_base_docs_html/bytearray.html
+
+
+
+练习:
+  有一个bytearray字节数组
+    ba = bytearray(b'a1b2c3d4')
+    如何得到字节串b'1234'和 b'abcd'
+    将上述字节数组改为:
+       ba = bytearray(b'A1B2C3D4')
+
+  答案:
+    ba = bytearray(b'a1b2c3d4')
+    b1 = ba[1::2]  #b1=bytearray(b'1234')
+    b1 = bytes(b1)  # b1 = b'1234'
+    b2 = ba[::2]  # b2=bytearray(b'1234')
+    b2 = bytes(b1)  # b2 = b'1234'
+    ba[::2]  = range(65, 69)
+
+
+练习:
+  1. 打印 9 x 9 乘法表:
+    1x1=1
+    1x2=2 2x2=4
+    1x3=3 2x3=6 3x3=9
+    ......
+    1x9=9 ..............   9x9=81
+
+  2. 写一个生成器函数 myxrange(start, stop, step) 来生成一系列整数
+     要求功能与range完全相同
+     不允许调用range函数和列表
+    然后用自己写的myxrange函数求 1 ~ 100内奇数的平方和
+
+  3. 写一个myfilter生成器函数,功能与filter函数功能完全相同
+     如:
+        def myfilter(fn, iter1):
+             ...
+        L = [x for x in myfilter(
+            lambda x: x%2, range(10)
+        )]  # L = [1, 3, 5, 7, 9]
+
+  4. 将以前所有练习自己不看之前的代码重写一遍
+
+
