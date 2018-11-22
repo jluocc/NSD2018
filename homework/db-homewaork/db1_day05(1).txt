@@ -1,0 +1,300 @@
+5.5
+dba1_day05 数据备份与恢复
+数据完全备份与恢复 mysqldump/mysql
+数据增量备份与恢复 binlog日志/innobackupex
+++++++++++++++++++++++++++
+物理备份
+50]#  cp  -r /var/lib/mysql /root/mysqlall.bak
+50]#  scp -r  /root/mysqlall.bak  192.168.4.51:/root/
+
+物理恢复
+51]#  systemctl  stop  mysqld
+51]#  rm  -rf  /var/lib/mysql
+51]#  cp  -r  /root/mysqlall.bak  /var/lib/mysql
+51]#  chown  -R  mysql:mysql  /var/lib/mysql
+51]#  systemctl  start  mysqld  
+51]#  mysql  -uroot  -p123456
+mysql> show  databases;
+++++++++++++++++++++++++++++
+数据完全备份 mysqldump
+]#mkdir /mydata
+]#mysqldump -uroot -p123456 -A  >   /mydata/alldb.sql
+]#ls /mydata/
+]#vim /mydata/alldb.sql 
+
+]#mysqldump -uroot -p123456 db4  >   /mydata/db4.sql
+]#ls /mydata/
+
+]#mysqldump -uroot -p123456 db4 t2  >   /mydata/db4_t2.sql
+]#cat /mydata/db4_t2.sql 
+
+]#mysqldump -uroot -p123456 -B db3 db2  >   /mydata/twodb.sql
+
+
+完全恢复数据 (删除对应的备份数据，然后使用备份文件恢复数据)
+~]# mysql -uroot  -p123456  db4  <  /mydata/db4_t2.sql
+~]# mysql -uroot  -p123456  db4  <  /mydata/db4.sql
+
+练习15分钟  到 10:41
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+休息15分钟  到  11：05
+数据增量备份：
+方法1 启用binlog日志实现数据时时增量备份与数据恢复
+掌握binlog日志的使用： 
+binlog日志介绍？
+
+启用日志文件 
+]# vim /etc/my.cnf
+[mysqld]
+#log_bin
+log_bin=/logdir/plj
+server_id=50
+binlog_format="mixed"
+:wq
+
+]# mkdir /logdir
+]# chown  mysql  /logdir
+
+]# systemctl  restart  mysqld
+]# ls  /logdir/plj.*
+
+查看日志文件内容
+]# mysqlbinlog  /logdir/plj.000001
+
+
+删除已有的日志文件 ?
+
+手动创建新的日志文件? 
+++++++++++++++++++++++++++++++++++++
+读取日志文件里指定范围内的sql命令
+]# mysqlbinlog --start-position=958 --stop-position=1153 \
+/logdir/plj.000001
+
+]# mysqlbinlog  --start-datetime="2018/11/21 15:26:31" \
+--stop-datetime="2018/11/21 15:31:16" /logdir/plj.000001
+
+使用日志文件 恢复数据。
+]# mysqldump   -uroot  -p123456   db4  t2  > /root/t2.sql
+]# mysql -uroot -p123456
+mysql>reset master;
+mysql>insert into db4.t2 values("tom",1,"aaa");
+mysql>insert into db4.t2 values("jack",2,"aaa");
+mysql>insert into db4.t2 values("lucy",7,"aaa");
+mysql>insert into db4.t2 values("jerry",8,"aaa");
+mysql>select  * from  db4.t2;
+mysql> drop  table db4.t2;
+mysql> quit
+查看日志文件记录新数据的范围 并记录偏移量的范围
+]# mysqlbinlog /logdir/plj.000001 
+
+先使用完全备份文件恢复数据，再执行binlog日志记录的sql命令恢复数据
+]# mysql -uroot -p123456 db4  < /root/t2.sql
+
+]# mysqlbinlog --stop-position=1486  /logdir/plj.000001 \
+ | mysql -uroot  -p123456  
+
++++++++++++++++++++++++++++
+安装percona软件
+
+mysql50 ~]# rpm -ivh libev-4.15-1.el6.rf.x86_64.rpm 
+
+mysql50 ~]# yum -y  install  perl-DBD-mysql  perl-Digest-MD5
+
+mysql50 ~]# rpm -ivh percona-xtrabackup-24-2.4.7-1.el7.x86_64.rpm
+
+mysql50 ~]# rpm -ql percona-xtrabackup-24
+
+
+休息10分钟到 17:15
+
+]# innobackupex <选项>
+[root@mysql50 ~]# man  innobackupex
+
+完全备份
+]# innobackupex  --user root  --password 123456 /allbak --no-timestamp
+]# ls /allbak/
+
+
+完全恢复
+1准备恢复数据
+]# innobackupex --user root --password 123456  --apply-log  /allbak
+]# systemctl  stop  mysqld
+]# rm  -rf /var/lib/mysql/
+]# mkdir  /var/lib/mysql
+
+2拷贝备份文件到数据库目录下
+]# innobackupex --user root --password 123456  --copy-back  /allbak
+
+3修改文件所有者和组用户为mysql
+]# chown  -R mysql:mysql  /var/lib/mysql
+
+4启动数据库服务
+]# systemctl  start  mysqld
+++++++++++++++++++++++++++++++++++++++
+二、增量备份与恢复
+
+增量备份
+周一 首先做完全备份 （第1次备份 时要把所有数据全备份）
+]# innobackupex --user root --password 123456  /fullbak  
+--no-timestamp
+
+周二 向表里写新数据，做增量备份
+]# innobackupex --user root --password 123456  
+--incremental /new1dir --incremental-basedir=/fullbak  
+--no-timestamp
+
+周三 向表里写新数据，做增量备份
+]# innobackupex --user root --password 123456 
+--incremental /new2dir  --incremental-basedir=/new1dir  
+--no-timestamp
+
+15分钟 到 09：46
+
+innodb 事务日志文件
+lsn  日志序列号  
+]# cat /fullbak/xtrabackup_checkpoints
+]# cat /new1dir/xtrabackup_checkpoints
+]# cat /new2dir/xtrabackup_checkpoints
+
+增量恢复 15分钟  到 10：54
+]# systemctl  stop mysqld
+]# rm  -rf /var/lib/mysql
+]# mkdir /var/lib/mysql
+1 准备恢复数据
+]# innobackupex  --apply-log --redo-only /fullbak 
+2 合并日志文件
+]# innobackupex --apply-log --redo-only /fullbak  
+--incremental-dir=/new1dir
+
+]# innobackupex --apply-log --redo-only /fullbak  
+--incremental-dir=/new2dir
+3 把备份目录下数据拷贝到数据库目录下
+]# innobackupex  --copy-back /fullbak
+4 修改数据库目录的所有者和组用户为mysql
+]# chown  -R  mysql:mysql /var/lib/mysql
+
+5 启动数据库服务 ]# systemctl  start mysqld
+
+休息10分钟 到 10：10
+
+++++++++++++++++++++++++++++++++++++++
+休息到11：15
+
+恢复完全备份中的单个表
+
+对db5库做完全备份
+]# innobackupex  --user root  --password 123456    
+--databases="db5" /db5bak --no-timestamp
+
+查看备份信息  ]# ls /db5bak
+
+删除db5库里的b 表
+mysql> drop table  db5.b;
+
+没有了对应的表文件
+]# ls /var/lib/mysql/db5/b.*
+
++++++++++++++++++++++++
+使用备份文件恢复删除的b表
+创建删除的 b表
+mysql> create  table  db5.b( name char(10) );
+mysql> system  ls /var/lib/mysql/db5/b.*
+删除b表的表空间文件
+mysql> alter  table db5.b  discard  tablespace; 
+mysql> system  ls /var/lib/mysql/db5/b.*
+导出表信息
+]# innobackupex  --user root  --password 123456  
+--apply-log --export /db5bak
+把导出的表信息文件拷贝的数据库目录下
+]# cd /db5bak/db5/
+]# cp b.{cfg,exp,ibd} /var/lib/mysql/db5/
+]# chown mysql:mysql /var/lib/mysql/db5/*
+导入表空间
+mysql> alter  table db5.b  import  tablespace;
+mysql> select  * from  db5.b;
+mysql> system  rm  -rf  /var/lib/mysql/db5/b.cfg
+mysql> system  rm  -rf  /var/lib/mysql/db5/b.exp
++++++++++++++++++++++++++++++
+综合实验
+1、环境准备： （10分钟）
+创建1台新的rhel7 虚拟机配置如下:
+配置yum源 
+systemctl stop firewalld
+setenforce 0
+ip 地址  192.168.4.57
+
+2、192.168.4.57 主机做网站服务器（10分钟）
+在主机192.168.4.57 主机上部署LAMP环境 
+使用系统自带的rpm包即可
+运行网站服务 并编写网页测试文件test.html 网页内容自定义
+
+3、192.168.4.50 主机做mysql数据库服务器（10分钟）
+创建一个新库名为gamedb  用来存储网站服务器192.168.4.57的数据
+添加新的授权用户 要求如下：允许网站服务器192.168.4.57 使用
+userweb用户连接数据库服务器50  连接密码123456 连接后对gamedb
+库仅有查询记录和插入记录的权限。
+
+
+4 在数据库服务器的gamedb库里创建
+存储网站注册用户信息的表regtab
+mysql> create table  gamedb.regtab(
+    -> username char(15),
+    -> password char(6)
+    -> );
+Query OK, 0 rows affected (0.21 sec)
+
+mysql> select  * from gamedb.regtab;
+
+5 程序员编写用户注册网页页面reg.html
+
+6 程序员编写把存储注册帐号存储到数据库里的脚本tomysql.php
+
+休息10分钟 到 15：05
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
