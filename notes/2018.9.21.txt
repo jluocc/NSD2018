@@ -1,0 +1,440 @@
+一 DNS
+1.DNS服务基础
+1）功能
+--正向解析
+根据注册的域名查找对应的ip地址
+--反向解析
+根据ip地址查找对应的注册域名，不常用
+
+2）域名体系
+IANA--互联网数字分配机构
+Internet Assigned Numbers Authority
+整个域名系统的最高权威机构
+CINIC--中国互联网络信息中心
+China Internet Network Information Center
+主管国家顶级域.cn
+--域名代理/注册/购买服务商
+新网--http://www.xinnet.com
+万网--http://www.net.cn
+中国互联--http://hulian.top
+
+www.qq.com.
+--根域.
+www.qq.com.  最后的点为根域
+
+一级域名：.com   .cn  .edu  .hk  .tw  .us
+
+二级域名：.cn.com  .us.com  .jp.com
+
+三级域名：sina.cn.com  
+
+完整的主机名：web.sina.cn.com  ftp.sina.cn.com
+
+FQDN：完全合格主机名
+
+服务端：
+3）安装软件包
+bind 域名服务包
+bind-chroot 提供虚拟根支持
+--bind服务端程序
+  主要执行程序：/usr/sbin/named
+  系统服务：named
+  默认端口:tcp/udp 53
+  运行时的虚拟根环境：/var/named/chroot
+--主配置文件: /etc/named.conf   
+作用
+  设置本服务器负责解析的域名
+全局配置部分
+  -设置监听地址/端口、地址库存放位置等
+options {
+        listen-on port 53 { 192.168.4.7; }; #监听地址和端口，
+        listen-on-v6 port 53 { ::1; };      
+        directory       "/var/named";  #地址文件的默认位置
+        dump-file       "/var/named/data/cache_dump.db";
+        statistics-file "/var/named/data/named_stats.txt";
+        memstatistics-file "/var/named/data/named_mem_stats.txt";
+        allow-query     { all; };  #允许任何客户机查询，删掉默认允许任何客户机访问
+}         提示：参数中{}两边必须有空格，行尾';'结尾不能有空格
+区域配置部分
+  -定义DNS区域、类型、地址文件路径等
+  -关键IN表示Internet，可省略
+zone "tedu.cn" IN {              #定义正向区域
+     type master;  #区域为主DNS  slave则为辅   hint只能为根域名使用，普通域名不能使用  
+     file "tedu.cn.zone";       #地址库文件 命名规则：域名.zone
+};
+
+include "/etc/named.rfc1912.zones"; #可载入其他配置
+include "/etc/named.root.key";
+
+--地址库文件: /var/named/.....
+
+
+
+
+4)修改配置文件
+例子：
+# cp /etc/named.conf /root/   #做好备份
+# vim /etc/named.conf
+	options {
+		directory       "/var/named";
+	};
+
+	zone "tedu.cn" IN {
+		type master;
+		file "tedu.cn.zone";
+	};
+
+
+5）新建地址库文件
+cp -p 源文件  目标文件
+-p：保持文件属性不变的拷贝
+例子
+#cp -p /var/named/named.localhost /var/named/tedu.cn.zone   #保持属性不变拷贝
+#vim  /var/named/tedu.cn.zone
+$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+tedu.cn.        NS      svr7.tedu.cn.    
+svr7.tedu.cn.   A       192.168.4.7
+www.tedu.cn.    A       1.1.1.1
+可以改为：后面不加'.'，默认补全维护的域名如:tedu.cn,建议书写下面格式
+tedu.cn.        NS      svr7
+svr7            A       192.168.4.7
+www             A       1.1.1.1
+提示：域名须要顶格写，不能有空格
+
+6）重启
+# systemctl restart named   #启动NDS服务
+# systemctl enable named    #设置开机自启
+
+
+客户端：
+1）配置
+# echo 'nameserver 192.168.4.7' > /etc/resolv.conf #告诉DNS服务器的地址
+2）测试
+[root@pc207 ~]# nslookup www.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.tedu.cn
+Address: 1.1.1.1
+
+
+
+2.多区域DNS
+服务端：
+# vim /etc/named.conf 
+options {
+        directory       "/var/named";
+};
+
+zone "tedu.cn" IN {
+        type master;
+        file "tedu.cn.zone";
+};
+zone "qq.com" IN {
+        type master;
+        file "qq.com.zone";
+};
+
+#cp -p /var/named/named.localhost /var/named/tedu.cn.zone   #保持属性不变拷贝
+#vim  /var/named/tedu.cn.zone
+$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+tedu.cn.        NS      svr7.tedu.cn.    #
+svr7.tedu.cn.   A       192.168.4.7
+www.tedu.cn.    A       1.1.1.1
+
+# cp -p /var/named/tedu.cn.zone /var/named/qq.com.zone
+# vim /var/named/qq.com.zone
+$TTL 1D
+@       IN SOA  @ rname.invalid. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+qq.com.        NS       svr7
+svr7            A       192.168.4.7
+www             A       2.2.2.2
+jluo            A       8.8.8.9
+
+客户端：
+1）配置
+# echo 'nameserver 192.168.4.7' > /etc/resolv.conf #告诉DNS服务器的地址
+2）测试
+--测试域名1
+[root@pc207 ~]# nslookup www.tedu.cn
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.tedu.cn
+Address: 1.1.1.1
+
+--测试域名2
+[root@pc207 ~]# nslookup www.qq.com
+Server:		192.168.4.7
+Address:	192.168.4.7#53
+
+Name:	www.qq.com
+Address: 2.2.2.2
+
+
+3.DNS查询结果的轮询
+
+
+
+二 泛域名解析
+1.无规律：
+1） *
+	$TTL 1D
+	@       IN SOA  @ rname.invalid. (
+		                                0       ; serial
+		                                1D      ; refresh
+		                                1H      ; retry
+		                                1W      ; expire
+		                                3H )    ; minimum
+	qq.com.        NS       svr7
+	svr7            A       192.168.4.7
+	www             A       2.2.2.2
+	jluo            A       8.8.8.9
+	*               A       9.9.9.9   #泛域名,匹配所有
+
+2）域名解析
+qq.com
+
+	qq.com.        NS       svr7
+	svr7            A       192.168.4.7
+	www             A       2.2.2.2
+	jluo            A       8.8.8.9
+	*               A       9.9.9.9   #泛域名,匹配所有
+	qq.com.         A       3.3.3.3
+
+
+
+2.有规律的泛域名解析
+需求：
+	pc1.tedu.cn---------->192.168.20.1
+	pc2.tedu.cn---------->192.168.20.2
+	pc3.tedu.cn---------->192.168.20.3
+	pc4.tedu.cn---------->192.168.20.4
+		 .
+		 .
+	pc50.tedu.cn---------->192.168.20.50
+
+
+函数：$GENERATE   造数      起始点-结束点
+例子
+$GENERATE 1-50 pc$.tedu.cn.   A  192.168.20.$
+
+
+测试：
+	[root@pc207 ~]# nslookup pc4.tedu.cn
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	Name:	pc4.tedu.cn
+	Address: 192.168.20.4
+
+	[root@pc207 ~]# nslookup pc8.tedu.cn
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	Name:	pc8.tedu.cn
+	Address: 192.168.20.8
+
+3.解析记录的别名
+---CNAME
+ftp             A       4.4.4.4
+tts             CNAME   ftp
+
+测试：
+	[root@pc207 ~]# nslookup tts.tedu.cn
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	tts.tedu.cn	canonical name = ftp.tedu.cn.   #加CNAME后的效果 
+	Name:	ftp.tedu.cn
+	Address: 4.4.4.4
+
+
+三 子域授权
+
+1.父域：www.qq.com(二级域名)           #已经配置好了
+
+2.子域：www.bj.qq.com(三级域名)        #在另一台服务器上操作
+# vim /etc/named.conf
+	options {
+		directory       "/var/named";
+	};
+
+
+	zone "bj.qq.com" IN {
+		type master;
+		file "bj.qq.com.zone";
+	};
+
+# cp -p /var/named/named.localhost /var/named/bj.qq.com.zone
+#vim /var/named/bj.qq.com.zone
+	$TTL 1D
+	@       IN SOA  @ rname.invalid. (
+		                                0       ; serial
+		                                1D      ; refresh
+		                                1H      ; retry
+		                                1W      ; expire
+		                                3H )    ; minimum
+	bj.qq.com.      NS      pc207
+	pc207           A       192.168.4.207
+	www             A       20.30.40.50
+
+测试：
+	[root@pc207 ~]# nslookup www.bj.qq.com 192.168.4.207
+	Server:		192.168.4.207
+	Address:	192.168.4.207#53
+
+	Name:	www.bj.qq.com
+	Address: 20.30.40.50
+
+	[root@pc207 ~]# nslookup www.qq.com 192.168.4.7
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	Name:	www.qq.com
+	Address: 2.2.2.2
+
+	[root@pc207 ~]# nslookup www.bj.qq.com 192.168.4.7
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	** server can't find www.bj.qq.com: NXDOMAIN
+
+
+子域授权配置
+父域配置：
+# vim /var/named/qq.com.zone
+	$TTL 1D
+	@       IN SOA  @ rname.invalid. (
+		                                0       ; serial
+		                                1D      ; refresh
+		                                1H      ; retry
+		                                1W      ; expire
+		                                3H )    ; minimum
+	qq.com.        NS       svr7
+	bj.qq.com      NS       pc207              #填写
+	svr7            A       192.168.4.7        
+	pc207           A       192.168.4.207      #填写
+	www             A       2.2.2.2
+	jluo            A       8.8.8.9
+
+测试
+[root@pc207 ~]# nslookup www.bj.qq.com 192.168.4.7
+	Server:		192.168.4.7
+	Address:	192.168.4.7#53
+
+	Non-authoritative answer:   #非权威解答
+	Name:	www.bj.qq.com
+	Address: 20.30.40.50
+
+递归解析（默认允许）：客户端询问DNS解析，DNS服务器与其他NDS服务器交流，最终将解析结果带回来的过程。
+recursion yes;         默认允许递归
+recursion no;          禁止递归  
+#dig 域名
+dig 域名 
+
+迭代解析：DNS服务器与其他DNS服务器交流的过程
+
+
+
+
+3.主机映射记录文件
+/etc/hosts（起到DNS解析的功能，只为本机提供解析功能）
+#nslookup 不读/etc/hosts文件
+
+客户端解析DNS域名优先级：
+   1./etc/hosts
+   2./etc/resolv.conf  DNS服务器
+
+
+四 缓存DNS
+构建方式：
+1)全局转发（建议）
+将请求转发给指定的公共DNS（其他缓存），请求递归
+--真机搭建yum仓库
+# mount /iso/CentOS-7-x86_64-DVD-1708.iso  /dvd
+# vim /etc/yum.repos.d/mydvd.repo
+[CentOS7]
+name=centos7
+baseurl=file:///dvd
+enabled=1
+gpgcheck=0
+
+--安装软件包
+# yum -y install bind bind-chroot
+
+--查看真机DNS服务地址
+
+--修改DNS主配置文件，指定缓存dns服务器配置（全局转发式）
+options {
+        directory       "/var/named";
+        forwarders { 192.168.1.1 };  #转发给DNS服务器
+};
+
+测试
+	[root@pc207 ~]# nslookup www.baidu.com 192.168.4.254
+	Server:		192.168.4.254
+	Address:	192.168.4.254#53
+
+	Non-authoritative answer:
+	www.baidu.com	canonical name = www.a.shifen.com.
+	Name:	www.a.shifen.com
+	Address: 14.215.177.38
+	Name:	www.a.shifen.com
+	Address: 14.215.177.39
+
+
+
+2)根域迭代
+依次向根、一级、二级...域的DNS服务器迭代
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
