@@ -1,0 +1,151 @@
+一 权限归属
+1.基本权限
+
+1）访问权限
+读取：r      #查看文件内容  cat less head tail
+写入：w      #修改     vim 保存
+可执行：x    #运行
+
+2）权限使用对象
+所有组：拥有此文件/目录的用户-user u
+所属组：拥有此文件/目录的组-group  g
+其他用户：除所有者，所属组以外的用户-other o
+
+3)
+drwxr-xr-x. 2 root root    6 1月  12 2018 Desktop
+第1字母：
+-：文本文件
+d：目录
+l：快捷键
+
+中间9个字母
+所有者：前3个字母
+所属组：中间3个字母
+其他用户：后3个字母
+
+4)chmod
+格式：chmod [-R] 归属关系+-=权限类别 文档.....
+-R:递归修改权限(修改此目录下的目录和文件都修改)
+
+
+5)linux判断用户具备的权限
+查看用户对于文档处于什么身份：所有者>所属组>其他人     特点：匹配及停止
+查看相应权限位置的权限
+
+6）设置文档归属
+chown
+chown [-R] :属组 文档....
+chown [-R] 属主 文档....
+chown [-R] 属主：属组 文档....
+二 附加权限（特殊权限）s(原来由执行权限)  S（原来没有执行权限）
+set GID
+附加在属组的x上
+属组的权限标识会变成s
+适用于目录，set GID可以使目录下新增的文档自动设置与父目录相同的属组 
+
+三 acl访问控制列表
+
+能够对个别用户，个别组设置独立的权限
+大多数挂载的EXT4/4 XFS默认支持
+
+格式：setfacl [-R] -m u:dc:rx 目录名
+setfacl [-R] -m g:组名:rx 目录名
+setfacl -x u:dc 目录名
+setfacl -b 目录名  
+
+     getfacl 目录名
+
+四 使用LDAP认证
+
+1）
+ 主要实现网络用户认证，达到用户的集中管理
+ 本地用户：由本地创建，用于本地登陆 本地/etc/paaswd
+ 网络用户：由LDAP服务器提供用户名，密码信息
+
+
+服务端：LDAP服务器  虚拟机classroom
+
+客户端：虚拟机server
+1.安装软件包:sssd   与LDAP服务器沟通的软件
+2.安装图形工具，配置sssd软件包：authconfig-gtk
+
+
+2）家目录漫游
+1.做共享
+NFS共享 netwark file system
+
+NFS共享服务端：classroom
+
+客户端：
+
+查看服务端共享
+showmount -e 服务器地址
+
+[root@server0 ~]# showmount -e classroom.example.com
+Export list for classroom.example.com:
+/home/guests 172.25.0.0/255.255.0.0
+
+访问服务端数据共享
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
