@@ -1,0 +1,193 @@
+4、编写脚本实现以下功能；
+
+每天早上5点开始做备份
+
+要备份的是/var/mylog里所有文件和目录可以压缩进行备份
+
+备份可以保存到别一台器上192、168、1、2 FTP帐号 aaa 密码 bbb
+
+要示每天的备份文件要带有当天的日期标记
+
+答：
+
+[root@haojiu ~]#cat /root/mylogbak.sh
+
+#!/bin/bash
+
+#scripts for dirbakup and upload to ftp server.
+
+#author by haojiu
+
+#create by
+
+bakdir=mylog
+
+date=`date +%F`
+
+cd /var
+
+tar zcf ${bakdir}_${date}.tar.gz ${bakdir}
+
+sleep 1
+
+ftp -n <<- EOF
+
+open 192.168.142.129    #远程ftp服务器IP
+
+user aaa bbb
+
+put mylog_*.tar.gz
+
+bye
+
+EOF
+
+rm -rf  mylog_*.tar.gz     #这步之前可以做一个判断，判断文件上传成功再执行rm，留给各位发挥吧。
+
+添加crontab:
+
+crontab -l
+
+00 05 * * * /bin/bash /root/mylogbak.sh     #每天早上5点开始执行备份脚本
+
+
+9、将文件/etc/a 下中除了 b文件外的所有文件压缩打包放到/home/a下，名字为a.gz
+
+答： tar --exclude /etc/a/b -zPcvf /home/a/a.gz /etc/a       （不加P选项会提示：『tar: Removing leading `/’ from member names』）
+
+
+11、umask 022代表什么意思
+
+答： 新建文件夹或文件的权限是由所谓基本码减去称之为umask的屏蔽位得到的。
+
+按照规定：文件夹的基本码是rwxrwxrwx(777)，文件的基本码是rw-rw-rw-(666)
+
+因此新建文件夹是777-022=755(rwxr-xr-x),新建文件是666-022=644(rw-r–r–)。
+
+综上，umask 022表示默认创建新文件权限为755 也就是 rxwr-xr-x(所有者全部权限，属组读写，其它人读写)
+
+
+12、如何查看某进程所打开的所有文件
+
+答：取出该进程的进程号，然后用lsof -p pid查看打开的所有文件。（这里以crond进程为例）
+
+[root@haojiu a]# ps -ef |grep crond|grep -v grep |awk ‘{print $2}’   #取出进程号
+
+2550
+
+[root@zintao01 a]# lsof -p 2550                                 #查看该进程打开的所有文件
+
+
+13、获取eth0网卡上80端口的数据包信息
+
+答：
+
+[root@haojiu ~]# tcpdump -i eth0 port 80
+
+
+15、常用的网络管理工具（5种以上）
+
+答： Windows下有：ipcofnig(/all,/renew,/release),ping,tracert,nslookup……
+
+Linux下有：ifconfig,ping,tracerroute,dig,nslookup……
+
+
+16、ftp、https、smtp、pops、ssh的端口号
+
+答： ftp（20和21）、https(443)、smtp(25)、pops(110)、ssh(22)
+
+
+18、请用iptables控制来自192.168.1.2主机的80端口请求
+
+答： iptables -A INPUT -p tcp -s 192.168.1.2 –dport 80 -j ACCEPT   (允许来自192.168.1.2这台主机访问80端口)
+
+
+19、请用shell脚本创建一个组class、一组用户，用户名为stdX X从01-30，并归属class组
+
+答： 脚本如下
+
+[root@zintao01 ~]# cat adduser.sh
+
+#!/bin/bash
+
+#script for adduser.
+
+#create by haojiu
+
+#2015-x-x
+
+groupadd class
+
+user=std
+
+for i in {01..30}
+
+do
+
+useradd -G class ${user}$i
+
+done
+
+
+21、如何删除已满的数据库日志信息
+
+答： 在my.cnf中的[mysqld]段下面加入：expire-logs-days=7（设置自动清除7天钱的logs），重启mysql；
+
+或者登录进mysql，执行：purge binary logs to ‘mysql-bin.000003’;          #删除bin-log(删除mysql-bin.000003之前的而没有包含mysql-bin.000003)
+
+如果是mysql主从环境的，删除日志，语句格式如下：
+
+PURGE {MASTER | BINARY} LOGS TO ‘log_name’
+
+PURGE {MASTER | BINARY} LOGS BEFORE ‘date’
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
