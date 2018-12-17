@@ -142,10 +142,37 @@ PURGE {MASTER | BINARY} LOGS TO ‘log_name’
 PURGE {MASTER | BINARY} LOGS BEFORE ‘date’
 
 
+1 请写出一下命令执行的结果
+bash$ echo “sinaops” | read a ; echo $a       ==> 无输出
+bash$ echo “sinaops” | while read a ;do echo $a ;done　　　==> 输出sinaops
+
+3 通过free命令查看内存是，看到的buffer和cache各表示什么含义？
+两者都是RAM中的数据。简单来说，buffer是即将要被写入磁盘的，cache是被从磁盘中读出来的。这二者是为了提高IO性能的，并由OS管理，并非应用自己分配的内存，而是OS自己根据需要对空闲内存进行的额外利用。因为这部分只是缓存，降低IO，提升性能，只要应用程序有需要，OS可以直接将buffer写入磁盘，将cache删掉来得到空闲内存给应用程序使用
 
 
+4 使用ln -s 和mv 对某一个文件做如下操作时（bash$ ln -s /usr/afile /etc/bfile    bash$ mv /etc/afile /etc/bfile ）对inode和block有哪些影响？
+ln　-s 给文件做软连接，如果bfile文件存在，则创建失败;而mv移动文件时，
 
 
+4 请解释session和cookie的实现原理和区别
+session原理：当用户请求一个动态页面时，系统将自动创建一个Session;退出应用程序或关闭服务器时，该Session撤销。系统在创建Session时将为其分配一个长长的字符串标识，以实现对Session进行管理与跟踪。
+cookie:如果浏览器使用的是 cookie，那么所有的数据都保存在浏览器端，比如你登录以后，服务器设置了 cookie用户名(username),那么，当你再次请求服务器的时候，浏览器会将username一块发送给服务器，这些变量有一定的特殊标记。
+区别：
+1、cookie数据存放在客户的浏览器上，session数据放在服务器上.
+2、cookie不是很安全，别人可以分析存放在本地的COOKIE并进行COOKIE欺骗考虑到安全应当使用session。
+3、session会在一定时间内保存在服务器上。当访问增多，会比较占用你服务器的性能考虑到减轻服务器性能方面，应当使用COOKIE。
+4、单个cookie保存的数据不能超过4K，很多浏览器都限制一个站点最多保存20个cookie。(Session对象没有对存储的数据量的限制，其中可以保存更为复杂的数据类型)
+5，两者最大的区别在于生存周期，一个是IE启动到IE关闭.(浏览器页面一关 ,session就消失了)
+一个是预先设置的生存周期，或永久的保存于本地的文件。(cookie)
+
+
+5 同一时间脚本只能运行一个实例（可以用任意语言实现）
+
+6 计算出从你生日之日起到今天一共过了多少天？（可以用除shell之外任意语言实现）
+
+7 写出一段程序，用于判断一段字符串是否是回文。（可以用除shell之外任意语言实现）
+
+8 有一文件记录了1-100000之间随机的整数共5000个，存储的格式100,50,35,89…请取出其中最大和最小的整数。（可以用除shell之外任意语言实现）
 
 
 
