@@ -1,2 +1,0 @@
-git clone git://124.193.128.166/nsd1808.git
-
