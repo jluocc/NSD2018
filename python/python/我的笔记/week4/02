@@ -1,0 +1,456 @@
+day16笔记:
+文件
+  长期存储数据
+  单位是字节(byte)
+  文件的操作:
+    1. 打开文件
+    2. 读/写文件
+    3. 关闭文件
+        释放资源(缓冲区, 内核资源)
+  打开文件的函数:
+    open(文件路径名, 打开模式)
+  方法:
+    F.close() 关闭文件
+    # 读,仅在'r'模式下可用
+    F.read([n]) 读取n个字节/n个字符
+    F.readline()
+    F.readlines() 
+    # 写,仅在'w', 'x', 'a' 模式下可用
+    F.write(字节串/字符串)
+    F.writelines([字节串/字符串元素])
+    # 以下两个函数通常只对二进制模式文件操作
+    F.seek(偏移量,起始位置)
+    F.tell()  # 得到当前读写位置指针
+    
+    F.flush()  # 清空缓冲区
+
+打开模式:
+  二进制模式: 'b'
+    把文件看成的字节数据,读写时会直接把磁盘数据以字节串形式返回或写入
+    
+  文本模式:   't'
+    把文件看成是字符数据,读写过程中会自动编/解码(默认是'utf-8'),而且会把换行符进行自动转换
+
+传输数据的单位是字节串
+tell和seek通常只对二进制文件进行操作
+因为文本文件比如汉字可能占多个字节码，如果是从
+某一个分开的字节开始，那么便不能组成一个完整的汉字
+打开模式：
+	二进制模式  'b'（把文件看成是字节数据，读写时会直接把磁盘数据以字节串形式返回或写入）
+	（声音，视频等文件都是二进制文件）
+	文本模式   't'（把文件看成是字符数据，读写过程中会自动的编/解码
+	默认是utf-8，而且会把换行符进行转换）
+汉字编码：
+	只有两种：
+		GB系列（国家标准）（国际编码冲突，乱码问题）
+		Unicode （国际标准（unicode32(unicode16)））<-----互转------>utf-8
+
+面向对象编程
+###面向过程编程的基本单位是函数，谁先做什么事，最后形成什么样的结果
+面向对象编程的基本单位是类（包含过程，将面向过程进行总结，升级）
+什么是对象：
+	对象是指现实中的物体或实体（也叫实例）
+
+什么是面向对象：一种编程思想，把一切看成对象（实例），用各种对象之间
+的关系描述事物
+
+对象都有什么特征
+	对象有很多属性（名词，形容词）
+	对象有很多行为（动作，动词）
+
+什么是类：
+	拥有相同属性和行为的对象分为一组即为一个类
+	类是用来描述对象的工具，用类可以创建此类的对象（实例）
+
+类的创建语句 class 语句
+语法：
+	class 类名（继承列表）：
+		'''类的文档字符串'''
+		实例方法
+		类变量
+		类方法(@classmethod)
+		静态方法(@staticmethod)
+
+作用：
+	创建一个类
+	用于描述此类对象的行为和属性
+	类用于创建类一个或多个对象（实例）
+说明：
+	类名必须是标识符
+	类名实质是变量，它在创建时绑定一个类
+
+构造函数
+	调用表达式：
+		类名（创建传参列表）
+	作用：
+		创建这个类的实例对象，并返回此实例对象的引用关系
+	说明：
+		实例有自己的作用域和名字空间，可以为该实例添加实例变量（也叫属性）
+
+class Dog:
+    '''次语句用来定义一个新的类型Dog'''
+    pass
+dog1=Dog()
+print(id(dog1))
+dog2=Dog()
+print(id(dog2))
+lst1=list()
+print(id(lst1))
+lst2=list()
+print(id(lst2))
+
+140007042213144
+140007042213256
+140007042117768
+140007042267464
+##########################
+
+实例方法(instance method)
+定义语法：
+	class 类名（继承列表）：
+		def 实例方法名（self ,形参列表）：
+			'''方法的文档和字符串'''
+			语句块
+作用：
+	用于描述一个对象的行为，让此类型的全部对象都拥有相同的行为
+说明：
+	1.实例方法的实质是函数，是定义在类内的函数
+	2.实例方法至少有一个形参，第一个形参绑定调用这个方法的实例，一般命名为'self'
+实例方法的调用语法：
+	实例.实例方法名（调用实参）
+	或
+	类名.实例方法名（实例，调用实参）
+	Dog.play(dog2,'飞盘')
+
+方法的传参和函数的不一样，多一个self，方法定义在类里面
+class Dog:
+    '''这个是一只可爱的小动物'''
+    def eat(self,food):
+        '''此方法用来描述小狗吃的行为'''
+        print('id为%d的'%id(self),end='')  ##可以连着写，可以代替sep=''
+        print('小狗正在吃',food)
+    def sleep(self,hours):
+        print('id为%d的'%id(self),end='')
+        print('小狗睡了%d小时'%hours)
+dog1=Dog()
+dog1.eat('骨头')
+dog1.sleep(5)
+
+
+id为139747626386656的小狗正在吃 骨头#########id相同，同一个对象
+id为139747626386656的小狗睡了5小时
+（三个快捷键ctrl+d,ctrl+[],alt+方向键）
+
+实例属性：instance attribute
+	每个实例都可以有自己的变量，称为实例变量（也叫属性）
+使用语法：
+	实例.属性名
+赋值规则：
+	首次赋值则创建此属性
+	再次赋值则改变此属性的绑定关系
+作用；
+	记录每个对象自身的数据
+
+class Dog:
+    def eat(self,food):
+        print(self.color,'的',self.kinds,'正在吃',food)
+dog1=Dog()
+dog1.kinds='哈士奇'
+dog1.color='白色'
+dog1.color='黄色'
+print(dog1.color,'的',dog1.kinds)
+dog1.eat('骨头')
+
+黄色 的 哈士奇
+黄色 的 哈士奇 正在吃 骨头
+##################################没错
+dog2=Dog()
+dog2.kinds='藏獒'
+dog2.eat('狗粮')
+######################没有颜色属性，方法调用时是出错
+
+class Dog:
+    def eat(self,food):
+        print(self.color,'的',self.kinds,'正在吃',food)
+        self.last_food=food##############给实例变量赋值
+    def show_info(self):
+        print(self.color,'的',self.kinds,'上次吃的是',
+            self.last_food)
+dog1=Dog()
+dog1.kinds='哈士奇'
+dog1.color='白色'
+dog1.color='黄色'
+print(dog1.color,'的',dog1.kinds)
+dog1.eat('骨头')
+
+dog2=Dog()
+dog2.color='棕色'
+dog2.kinds='藏獒'
+dog2.eat('狗粮')
+
+dog1.show_info()
+dog2.show_info()
+
+黄色 的 哈士奇
+黄色 的 哈士奇 正在吃 骨头
+棕色 的 藏獒 正在吃 狗粮
+黄色 的 哈士奇 上次吃的是 骨头
+棕色 的 藏獒 上次吃的是 狗粮
+##################################################
+class Human:
+    def set_info(self,name,age,adress='不详'):
+        self.name=name
+        self.age=age
+        self.adress=adress
+
+    def show_info(self):
+        print('名字：',self.name)
+        print('年龄：',self.age)
+        print('地址：',self.adress)
+s1=Human()
+s1.set_info('小张',20,'深圳')
+s2=Human()
+s2.set_info('小王',18)
+s1.show_info()
+s2.show_info()
+
+名字： 小张
+年龄： 20
+地址： 深圳
+名字： 小王
+年龄： 18
+地址： 不详
+############################################################
+
+del语句小结：
+	1.删除变量
+		del a,b,c
+	2.删除列表中的元素
+		del l[0]
+	3.删除字典的键值对
+		del d['name']
+	4.删除对象的属性
+		del obj.attr
+
+初始化方法（创建完对象后自动调用）
+作用：
+	对新创建的对象添加属性
+格式：
+	class 类名（继承列表）：
+		def __init__(self,形参列表)：
+			语句块
+说明：
+	1.初始化方法名必须为'__init__'不可改变
+	2.初始化方法会在构造函数创建实例后自动调用，且
+	将实例自身通过第一个参数self传入'__init__'方法
+	3.构造函数的实参将能过__init__方法的形参传入到'__init__'方法中
+	4.初始化方法必须返回None
+（类的创建和使用分开，使用者不需要关心类是怎么创建的，创建者需要使使用者更方便创建对象）
+class Car:
+    def __init__(self,c,b,n):  #####没有这个方法不传参不会有错
+        self.color=c
+        self.brand=b
+        self.model=n
+        print('初始化方法被调用')
+    def run(self,speed):
+        print(self.color,'的',self.brand,self.model,'正在以',
+        speed,'公里/小时的速度行驶',sep='')
+car1=Car('红色','奥迪','a4')########创建并初始化
+car1.run(4)
+
+初始化方法被调用
+红色的奥迪a4正在以4公里/小时的速度行驶
+#####################################################
+class Student:
+    def __init__(self,name,age,score=0):
+        self.name=name
+        self.age=age
+        self.score=score
+    def set_score(self,score):
+
+        self.score=score
+    def show_info(self):
+        print('姓名：%s 年龄：%d 分数：%d' % (self.name,self.age,self.score))
+l=[]
+l.append(Student('小张',20,100))
+l.append(Student('小李',18))
+l.append(Student('小赵',19,85))
+for s in l:
+    s.show_info()
+l[1].set_score(70)
+print()
+for s in l:
+    s.show_info()
+
+姓名：小张 年龄：20 分数：100
+姓名：小李 年龄：18 分数：0
+姓名：小赵 年龄：19 分数：85
+
+姓名：小张 年龄：20 分数：100
+姓名：小李 年龄：18 分数：70
+姓名：小赵 年龄：19 分数：85
+#################################################################
+l=[['小张',20,100],['小李',18,90],['小赵',19,85]]
+for x in l:
+    for y in x:
+        if y=='小李':
+            l.remove(x)
+            # del x  #####(没有这种操作)
+print(l)
+
+[['小张', 20, 100], ['小赵', 19, 85]]
+##############################################################
+
+析构方法：
+	class 类名（继承列表）：
+		def __del__(self):（只能有这个参数）
+			.....
+作用：在对象销毁前释放对象占用的资源
+说明：
+析构方法会在对象销毁前被自动调用
+python语言建议不要在对象销毁时做任何事情，因为销毁的时间难以确定
+##############################
+class Car:
+    def __init__(self,info):
+        self.info=info
+        print('汽车',info,'对象被创建')
+    def __del__(self):
+        print('汽车',self.info,'被销毁')
+c1=Car('BYD E6')
+# c2=c1             #########若有这句和下面一句，则不会被销毁，因为绑定了两个对象
+# del c1       ############如果有这句，会提前销毁
+input('按回车继续执行程序')
+print('程序正常退出'
+####################
+汽车 BYD E6 对象被创建
+按回车继续执行程序
+程序正常退出
+汽车 BYD E6 被销毁
+#####################################
+
+预置实例属性（实例变量）
+__dict__属性
+	此属性绑定一个存储此实例自身变量的字典
+
+>>> class Dog:
+...     pass
+...
+>>> dog1=Dog()
+>>> dir(dog1)
+['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__']
+
+>>> dog1.color='家米黄色'
+>>> dog1.__dict__
+{'color': '家米黄色'}
+>>> dog1.__dict__['color']
+'家米黄色'
+
+——class__属性
+	——class__属性绑定创建此实例的类
+	作用：
+		可以借助于此属性来访问创建此实例的类
+
+>>> dog1.__class__
+<class '__main__.Dog'>
+
+面向对象综合练习：
+两个人：
+1.姓名：张三 年龄：35
+2.姓名：李四 年龄：15
+行为：
+	教别人学东西 teach
+	赚钱  work
+	借钱borrow
+	显示自己的信息show_info
+
+事情：
+	张三交李四学python
+	李四交张三学王者荣耀
+	张三上班赚了1000元钱
+	李四向张三借了200元
+	35岁的张三有钱800元，他学会的技能是：王者荣耀
+	15岁的李四有钱200元，他学会的技能是：python
+######################################################
+class Human:
+    def __init__(self,name,age):
+        self.name=name
+        self.age=age
+    def teach(self,name,jineng):
+        print(self.name,'教',name,jineng)
+    def work(self,shumu):
+        print(self.name,'上班赚了',shumu,'元')
+    def borrow(self,name,shumu):
+        print(self.name,'向',name,'借了',shumu,'元')
+    def show_info(self,shumu,jineng):
+        print('%d的%s有钱%d元，学会的技能是%s'%(self.age,self.name,shumu,jineng))
+zhangsan=Human('张三',35)
+lisi=Human('李四',15)
+zhangsan.teach('李四','赚钱')
+lisi.teach('张三','王者荣耀')
+zhangsan.work(1000)
+lisi.borrow('张三',200)
+zhangsan.show_info(800,'王者荣耀')
+lisi.show_info(200,'赚钱')
+###############################################################################
+l=['ew','wer']
+def f1(l):
+    print(','.join(l))
+f1(l)
+
+ew,wer
+############################################################################
+class Human:
+    def __init__(self,name,age):
+        self.name=name
+        self.age=age
+        self.money=0
+        self.skill=[]
+    def teach(self,other,skill):
+        print(self.name,'教',other.name,skill)
+        other.skill.append(skill)
+    def work(self,money):
+        print(self.name,'上班赚了',money,'元')
+        self.money+=money
+    def borrow(self,other,money):
+        print(self.name,'向',other.name,'借了',money,'元')
+        other.money-=money
+        self.money+=money
+    def show_info(self):
+        print('%d的%s有钱%d元，学会的技能是%s'%(self.age,self.name,self.money,*self.skill))#######分解
+zhangsan=Human('张三',35)
+lisi=Human('李四',15)
+zhangsan.teach(lisi,'赚钱')
+lisi.teach(zhangsan,'王者荣耀')
+zhangsan.work(1000)
+lisi.borrow(zhangsan,200)
+zhangsan.show_info()
+lisi.show_info()
+用面向对象容易改，易维护
+###############################################
+
+用于类的函数：
+	isinstance(obj,class_or_tuple)返回对象obj是否是某个类的对象
+	或者某些类的一个类的对象，如果是返回True，否则返回False
+	tpye(obj)  返回对象的类型(类)
+
+isinstance(100,int)
+True
+>>> isinstance(10.0,int)
+False
+>>> 10.0=10
+  File "<stdin>", line 1
+SyntaxError: can't assign to literal  （比较运算）
+>>> 10.0==10
+True
+>>> class Dog:
+...     pass
+...
+>>> dog1=Dog()
+>>> isinstance(dog1,Dog)
+True
+>>> type(dog1) is Dog
+True
+>>> isinstance(dog1,(int,Dog,str))##########有一个为真就是真
+True
+
+

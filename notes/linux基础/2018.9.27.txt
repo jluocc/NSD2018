@@ -1,0 +1,242 @@
+一 rsync同步服务
+Remote Sync,远程同步
+1.rsync命令用法
+格式：rsync [选项..] 源目录 目标目录
+• 同步与复制的差异
+复制:完全拷贝源到目标
+同步:增量拷贝,只传输变化过的数据
+
+1)本地同步
+rsync [选项..] 本地目录1  本地目录2        #把目录1同步到目录2下
+rsync [选项..] 本地目录1/  本地目录2       #把目录1下的数据同步到目录2下
+-a :归档模式，相当于-rlptgoD
+-v :显示详细信息
+-z :传输过程中启用压缩/解压
+-n :测试同步过程，不做实际修改               #与-avz连用
+--delete :删除目标文件夹内多余的文档       #与-avz连用
+
+2)远程同步
+rsync+ssh
+--命令
+rsync user@host:远程目录/                       #列出ssh服务端资源
+rsync [选项..] user@host:远程目录 本地目录    #下行（下载） 不常用
+rsync [选项..] 本地目录 user@host:远程目录    #上行（上传）  常用
+-a :归档模式，相当于-rlptgoD
+-v :显示详细信息
+-z :传输过程中启用压缩/解压
+-n :测试同步过程，不做实际修改               #与-avz连用
+--delete :删除目标文件夹内多余的文档       #与-avz连用
+提示：同步目录时在目录后加/，表示同步目录里的数据；同步目录后不加/，表示同步此目录。
+
+2.实时同步
+1)部署公钥、私钥，实现ssh无密码验证
+[root@svr7 /]# ssh-keygen                #虚拟机A生成公钥、私钥 一路回车
+[root@svr7 /]# ls /root/.ssh             #公钥、私钥生成的位置  
+id_rsa  id_rsa.pub  known_hosts          
+[root@svr7 /]# ssh-copy-id root@192.168.4.207   #传递公钥到目标主机（入虚拟机B）
+[root@pc207 ~]# ls /root/.ssh                   #查看上传到虚拟机B的公钥
+authorized_keys                                 #上传到客户机的公钥文件
+
+2)inotify实时同步
+--源码安装inotify-tools工具，实现监控目录内容的变化
+[root@svr7 /]# mkdir /myrpm      
+[root@svr7 /]# tar -xf /tools/inotify-tools-3.13.tar.gz -C /myrpm   #减压
+[root@svr7 /]# yum -y install gcc make         #安装编译环境gcc make
+[root@svr7 /]# cd /myrpm/inotify-tools-3.13/
+[root@svr7 inotify-tools-3.13]# ./configure    #生成Makefile文件
+[root@svr7 inotify-tools-3.13]# make           #编译成二进制文件
+[root@svr7 inotify-tools-3.13]# make install   #安装
+[root@svr7 inotify-tools-3.13]# which inotifywait   #查看命令位置
+/usr/local/bin/inotifywait
+
+--inotifywait基本用法
+inotifywait [选项] 目标文件夹
+-m :持续监控（捕获一个事件后不退出）
+-r :递归监控，包括子目录及文件
+-q :减少屏幕输出信息
+-qq:无屏幕输出信息
+-e :指定监控的modify move create delete attrib等事件类别
+
+--书写shell脚本
+*利用while循环来反复检查单次监控结果
+while [条件]            
+do
+  循环执行的操作 
+done
+
+while inotifywait监控操作          #状态返回值为0即条件成立进入循环           
+do
+  循环执行的rsync同步操作 
+done
+
+例子
+[root@svr7 /]# vim /root/rsync.sh    #新建脚本
+#!/bin/bash
+while inotifywait -rqq /opt 
+do
+  rsync -az --delete /opt/ root@192.168.7.207:/opt
+done
+[root@svr7 /]# chmod +x /root/rsync.sh   #给予文件执行权限
+[root@svr7 /]# /root/rsync.sh            #运行脚本达到实时同步数据功能
+
+
+
+二 Cobbler装机平台
+基于CentOS7系统下部署Cobbler
+1.基本概念
+Cobbler是一款快速的网络系统部署工具
+集中管理所需服务，如DHCP，DNS，TFTP，Web
+Cobbler内部集成了一个镜像版本仓库、
+Cobbler内部集成了一个ks应答文件仓库
+Cobbler还提供了包括yum源管理，Web界面管理，API接口，电源管理等功能
+--CentOS7系统设置
+*设置防火墙为trusted
+# firewall-cmd  --set-default-zone=trusted 
+*当前及永久设置SELinux状态为permissive
+ [root@localhost ~]# setenforce 0    #当前临时关闭
+ [root@localhost ~]# getenforce 
+ [root@localhost ~]# vim /etc/selinux/config 
+  SELINUX=permissive
+
+2.安装
+安装软件 cobbler cobbler-web dhcp tftp-server pykickstart httpd  tftp-server 
+
+ cobbler         #cobbler程序包
+ cobbler-web     #cobbler的web服务包
+ pykickstart     #cobbler检查kickstart语法错误
+ httpd           #Apache web服务
+ dhcp            #dhcp服务
+ tftp-server     #tftp服务
+
+1）解压Cobbler.zip
+# unzip /Cobbler.zip -d /        #解压到根目录
+# unzip Cobbler/cobbler.zip -d /opt
+2)安装cobbler主程序、工具包等
+# yum -y install /opt/cobbler/*.rpm
+
+3.配置
+1）配置Cobbler
+位置：/etc/cobbler/settings
+[root@Cobbler /]# vim /etc/cobbler/settings 
+next_server: 192.168.4.168  #设置下一个服务器地址（该处为本机）
+server: 192.168.4.168       #设置本机为cobbler服务器
+manage_dhcp: 1              #设置cobbler管理dhcp服务
+pxe_just_once: 1            #防止客户端重复安装操作系统
+提示：
+开机启动： 匹配及停止  
+     1.硬盘启动    2.光驱设备     3.U盘     4.网络引导  
+
+2）配置cobbler的dhcp
+[root@Cobbler /]# vim /etc/cobbler/dhcp.template
+:%s /192.168.1/192.168.4/g                 #全文替换
+subnet 192.168.4.0 netmask 255.255.255.0 {
+     option routers             192.168.4.5;
+     option domain-name-servers 192.168.4.1;
+     option subnet-mask         255.255.255.0;
+     range dynamic-bootp        192.168.4.100 192.168.4.254;
+     default-lease-time         21600;
+     max-lease-time             43200;
+     next-server                $next_server;
+
+3)绝对路径解压cobbler_boot.tar.gz
+# tar -xPf /Cobbler/cobbler_boot.tar.gz    #P以绝对路径解压
+# ls /var/lib/cobbler/loaders/             #解压默认放置路径
+COPYING.elilo     COPYING.yaboot  grub-x86_64.efi  menu.c32    README
+COPYING.syslinux  elilo-ia64.efi  grub-x86.efi     pxelinux.0  yaboot
+
+4）启动服务
+[root@Cobbler /]# systemctl restart cobblerd 
+[root@Cobbler /]# systemctl enable cobblerd
+
+[root@Cobbler /]# systemctl restart httpd
+[root@Cobbler /]# systemctl enable httpd
+
+[root@Cobbler /]# systemctl restart tftp
+[root@Cobbler /]# systemctl enable tftp
+
+[root@Cobbler /]# systemctl restart rsyncd
+[root@Cobbler /]# systemctl enable rsyncd
+
+5)同步刷新cbbler配置
+[root@Cobbler /]# cobbler sync
+[root@Cobbler /]# firefox https://192.168.4.168/cobbler_web
+用户名：cobbler
+密 码：cobbler
+
+
+6)cobbler应用
+--导入镜像文件
+格式：cobbler import --path=挂载点 --name=导入系统命名(随意起)
+提示：
+cobbler导入的镜像放在：/var/www/cobbler/ks_mirror
+例子：
+#mount /dev/cdrom /dvd                             #挂载
+#cobbler import --path=/dvd --name=CnetOS7         #导入镜像
+#cobbler list                                      #查看有哪些系统
+
+--删除操作
+看有哪些系统
+格式：cobbler list
+删除菜单信息
+格式：cobbler profile remove --name=名称
+删除镜像信息
+格式：cobbler distro remove --name=名称
+例子：
+[root@Cobbler /]# cobbler list
+distros:
+   CentOS7-x86_64
+   RHEL7-x86_64
+
+profiles:
+   CentOS7-x86_64
+   RHEL7-x86_64
+[root@Cobbler /]# cobbler profile remove --name=RHEL7-x86_64
+[root@Cobbler /]# cobbler distro remove --name=RHEL7-x86_64
+[root@Cobbler /]# cobbler list
+distros:
+   CentOS7-x86_64
+
+profiles:
+   CentOS7-x86_64
+
+7)自定义应答文件
+提示：
+开头文件注释行要删除
+必须将ks文件放入Cobbler默认存放位置，即：/var/lib/cobbler/kickstart/
+--运行system-config-kickstart生成ks文件
+[root@cobbler ~]# system-config-kickstart  #生成ks文件
+
+--修改kickstart文件
+格式：cobbler profile edit --name=名称  --kickstart=/var/lib/cobbler/kickstarts/自定义.cfg
+例子：
+[root@cobbler-stu251 kickstarts]# cobbler profile edit --name=RHLE7-x86_64 --kickstart=/var/lib/cobbler/kickstarts/ks7.cfg
+
+--
+[root@cobbler ~]# cobbler profile report
+[root@cobbler ~]# cobbler sync  #同步配置
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

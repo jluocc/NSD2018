@@ -1,0 +1,236 @@
+day18回顾:
+  类
+    类变量(类属性)
+      特列的类变量
+        __slots__ 列表
+      预置的类变量:
+        __doc__
+        __base__
+      
+    类方法(@classmethod)
+        @classmethod
+        def get_v(cls):
+            pass
+
+  静态方法 @staticmethod
+    依懒于类或此类的对象来调用
+    
+继承/派生
+  继承可以直接使用父类的方法
+  派生可以添加新的方法
+
+单继承
+  class 类名(只有一个父类):
+      pass
+  示例:
+    class A:
+       def a(self):
+           pass
+       def b(self):
+           pass
+    class B(A):
+        pass
+覆盖 override
+   1.有继承
+   2.子类中有同名的方法
+   3.子类对象来调用同名的方法
+     出现覆盖现象
+
+super(类, 对象)
+super()  # 等同于super(当前类, self)
+   示例:
+      class A:
+          def m(self):
+             print("A.m")
+      class B(A):
+          def m(self):
+             print("B.m")
+      class C(B):
+          def m(self):
+             print("C.m")
+      c = C()
+      c.m()  # C.m
+      super(C, c).m()  # B.m
+      super(B, c).m()  # A.m
+          
+
+day19笔记:
+用于类的函数:
+  issubclass(cls, cls_or_tuple) 判断一个类是否继承自某个类cls或tuple中的某些类中的一个类,如果是其中一个类的派生类,则返回True,否则返回False
+
+  示例:
+    class A:
+        pass
+    class B(A):
+        pass
+    class C(B):
+        pass
+    issubclass(C, B)  # True
+    issubclass(B, A)  # True
+     
+
+封装 enclosure
+  封装是指隐藏类的实现细节,让使用者不用关心类的实现细节
+  封装的目的是让使用者通过尽可能少的方法或属性来操作对象
+
+私有属性和方法
+  python类中以双下划线('__') 开头,不以双下划线结尾的标识符为私有成员,私有成员只能使用方法来进行访问和修改
+  以'__' 开头的属性为私有属性
+  以'__' 开头的方法为私有方法
+
+示例见:
+  enclosure.py
+
+
+多态 polymorphic
+  字面意思: 多种状态
+  多态是指在有继承和派生关系的类中,调用基类对象的方法,实际能调用子类的覆盖方法的现象叫多态
+
+  状态:
+    静态(编译时确定的状态)
+    动态(运行时确定的状态)
+  说明:
+    多态调用的方法与对象相关,不与类型相关
+    python全部对象都只有"动态"没有"C++语言的"编译时状态(静态).
+  示例见:
+    poly.py
+
+面向对象的编程语言的特征:
+  封装
+  继承
+  多态
+
+
+
+多继承 multiple inheritance
+  多继承是指一个子类继承自两个或两个以上的父类(基类)
+
+  语法:
+    class 类名(基类名1, 基类名2, ...):
+        ...
+  说明:
+    1. 一个子类同时继承自多个父类,父类中的方法可以同时被继承下来
+    2. 如果两个父类中有同名的方法,而在子类中又没有覆盖此方法,调用结果难以确定
+
+  示列见:
+    multi_inherit.py
+
+多继承的问题(缺陷):
+  标识符冲突的问题,要谨慎使用多继承
+  示例见:
+    multi_inherit2.py
+
+多继承的 MRO(Method Resolution Order)问题
+  类的 __mro__ 属性
+    作用:
+      用来记录类的方法的查找顺序
+示例见:
+   mro.py
+
+
+对象转字符串函数:
+  str(obj)  通过给定的对象返回一个字符串(这个字符串通常是给人阅读的)
+  repr(obj) 返回一个附合python语法规则,且能代表此对象的表达式字符串,通常这个字符串一定是一个python表达式
+    通常:
+      eval(repr(obj)) == obj
+
+  例: s = "I'm a \"Teacher\""
+      s1 = str(s)
+      print(s1)  # I'm a "Teacher"
+      s2 = repr(s)
+      print(s2)  # 'I\'m a "Teacher"'
+    
+函数重写 overwrite
+  在自定义的类内加添相应的方法,让自定义的类创建的实例能够像内建对象一样进行内建的函数操作
+
+对象转字符串函数的重写方法:
+  repr() 函数的重写方法:
+    def __repr__(self):
+        ...
+  str()  函数的重写方法:
+    def __str__(self):
+        ...
+说明:
+  1. str(obj) 函数先查找obj.__str__()方法,调用此方法并返回结果
+  2. 如果obj.__str__()方法不存在,则调用obj.__repr__() 方法 并返回结果
+  3. 如果obj.__repr__方法不存在,则调用object类的__repr__实例方法显示<__main__.xxxxobject at 0xXXXXXXXX> 格式的字符串
+示例见:
+  mynumber.py
+
+
+内建函数重写:
+   方法名
+  __abs__        abs(obj) 函数调用
+  __len__        len(obj) 函数调用
+  __reversed__   reversed(obj) 函数调用
+  __round__      round(obj)  函数调用
+
+ 示例见:
+   mylist.py
+
+数值转换函数重写
+__complex__      complex(obj) 函数调用
+__int__          int(obj)  
+__float__        float(obj)
+__bool__         bool(obj)
+
+示例见:
+  myinteger.py
+
+布尔测试函数重写
+  方法名:  __bool__
+  作用:
+    用于bool(obj)函数取值
+    用于 if 语句的真值表达式
+    用于while语句的真值表达式
+  说明:
+    1. 类内有__bool__(self) 方法,调用obj.__bool__方法取值
+    2. 当不存在__bool__(self) 方法,将用obj.__len__() 方法的返回值求布尔值
+    3.如果不存在__len__(self) 方法,则直接返回True
+  示例见:
+    bool.py
+
+
+
+迭代器(高级)
+  什么是迭代器:
+    可以用next(it) 函数取值的对象,就是迭代器
+  迭代器协议
+    迭代器协议是指对象能够使用next函数获取下一项数据,在没有下一项数据时触发一个StopIteration异常来终止迭代的约定
+  迭代器协议的实现方法:
+    def __next__(self):
+        ....
+
+什么是可迭代对象
+  是指能用iter(obj) 函数返回迭代器的对象(实例)
+  可迭代对象的实现方法:
+    def __iter__(self):
+        ...
+        return 迭代器
+
+  示例见:
+    myiterator.py
+
+
+练习:
+  1. 修改现在有学生信息管理程序,实现保护学生对象信息的安全,将score,name, age变为除该类方法外的其它函数和方法无法访问(变为私有属性进行封装)
+
+  2. 自己写一个MyList为在,实现重写len,str,
+  让MyList类型的对象变为可迭代对象
+
+  3. 写一个类,Fibonacci实现迭代器协议,此类的对象可以作为可迭代对象生成相应的斐波那契数
+    1 1 2 3 5 8 13 ....
+    如:
+        class Fibonacci:
+            def __init__(self, n):
+                ...
+            ....
+    实现如下操作:
+        for x in Fibonacci(5)
+            print(x)  # 1 1 2 3 5
+        L = [x for x in Fibonacci(50)]
+        print(L)
+        pring(sum(Fibonacci(100)))
+
+
+

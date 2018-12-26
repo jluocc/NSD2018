@@ -1,0 +1,210 @@
+一 SELinux
+Security-Emhamced Linux 
+增强安全linux
+1.运行模式
+-enforcing 强制   1
+-permissive 宽松  0 
+-disabled 彻底禁用   
+任何一种模式变成disabled（彻底禁用）都要经历重启系统，反之也须重启
+查看当前模式：getenforce
+切换运行模式：setenforce 0|1   # permissive模式 | enforcing模式 
+配置文件：/etc/selinux/config
+
+
+
+2.搭建基本web服务
+本次展示简单httpd演示
+1）安装httpd（apache）软件包（服务器软件）
+
+2)启动服务
+[root@server0 ~]# firefox 127.25.0.11   #本机测试
+
+
+3）验证访问测试
+
+4）书写一个页面
+
+网页文件默认目录：/var/www/html
+
+3.搭建ftp
+测试vsftpd
+1.安装vsftpd
+
+默认共享数据路径：/var/ftp
+2.测试
+
+二 防火墙
+隔离作用
+配置文件位置：
+1.分类
+硬件防火墙：
+品牌：华为，思科等
+
+软件防火墙：
+系统服务firewalld
+管理工具：firewall-cmd,firewall-config(图形)
+
+2.防火墙区域
+1）
+-public ：仅允许访问本机的ssh，ping，dhcp服务
+-trusted：允许任何访问
+-block：阻塞任何来访请求，明确拒绝
+-drop：丢弃任何来访的数据包，直接丢弃
+  .
+  .
+
+数据包：数据 源IP 目标IP 目标端口号
+2）防火墙进入区域规则：匹配及停止
+--查看数据包源ip地址，再查看所有的区域中，是否有该源ip地址的规则，哪个区域有则进入哪个区域
+--进入默认区域public
+
+3.默认区域的修改
+
+查看默认区域
+[root@server0 ~]# firewall-cmd --get-default-zone  
+修改默认区域
+[root@server0 ~]# firewall-cmd --set-default-zone=区域名称
+例如：
+[root@server0 ~]# firewall-cmd --set-default-zone=trusted 
+success
+[root@server0 ~]# firewall-cmd --get-default-zone 
+trusted
+
+4.服务
+查看public的所有服务
+[root@server0 ~]# firewall-cmd --zone=public --list-all 
+添加服务
+[root@server0 ~]# firewall-cmd --zone=public --add-service=服务名称
+例子：
+[root@server0 ~]# firewall-cmd --permanent --zone=public --add-service=ftp
+success
+[root@server0 ~]# firewall-cmd --reload 
+success
+[root@server0 ~]# firewall-cmd --zone=public --list-services #查看开放的服务
+dhcpv6-client ftp http ssh
+5.--permanent
+加入--permanent  永久修改，能直接修改配置文件,需重新加载防火墙配置文件
+[root@server0 ~]# firewall-cmd --reload  #重新加载防火墙配置文件
+
+6.添加源ip规则设置
+[root@desktop0 ~]# firewall-cmd --zone=block --add-source=源ip地址
+例子：
+[root@desktop0 ~]# firewall-cmd --zone=block --add-source=172.25.0.11
+success
+注意：一个ip只允许属于一个区域
+
+7.端口
+端口号：编号 标识程序及应用、服务
+1)互联网常见的协议
+协议名称                                          默认端口号
+http:超文本传输协议                              80
+https：安全（加密）的超文本传输协议             443
+ftp：文本传输协议                                 21
+DNS：域名解析协议                                 53
+SMTP：用户发邮件协议                             25
+pop3：用户收邮件协议                             110
+telnet：远程管理协议                             23
+TFTP：简单的文本传输协议                         69
+SNMP：网络管理协议                                161
+
+注意：协议的端口可以有root改变，也可以具备多个端口号
+
+2)端口映射
+实现：172.25.0.11：5423 ---->172.25.0.11:80
+[root@server0 ~]# firewall-cmd --permanent --zone=public --add-forward-port=port=5423:proto=tcp:toport=80
+success
+[root@server0 ~]# firewall-cmd --reload 
+success
+
+注意：本机访问自己无法使用防火墙映射
+
+三 配置高级链接
+1.ipv6
+ipv4地址：由32位二进制组成，利用点分隔，用4个十进制数标识
+ipv6地址：128个二进制组成，利用冒号分隔8部分，最终每一部分利用4个16进制数表示
+[root@server0 ~]# nmcli connection modify 'System eth0' ipv6.method munual ipv6.addresses '2003:ac18::305/64' connection.autoconnect yes #设置ipv6地址
+[root@server0 ~]# nmcli connection up 'System eth0'           #重启网卡
+ping6 2003:ac18::305                                          #测试
+   
+四 配置链路聚合（聚合连接）
+备份网卡  实现网卡双工工作 
+
+聚合方式
+--轮询式（roundrobin）的流量负载均衡
+--热备份（activebackup）连接冗余
+
+运行器的类型切换：man teamd.conf |grep runner
+"runner": {"name": "activebackup"}
+或者
+"runner": {"name": "roundrobin"}
+
+eth0                  eth1
+         虚拟网卡team0
+
+1.创建虚拟网卡team0
+[root@server0 ~]# nmcli connection add type team con-name team0 ifname team0 autoconnect yes config '{"runner": {"name": "activebackup"}}'
+Connection 'team0' (21f7c390-5968-4780-9efa-821b34385b73) successfully added.
+
+2.添加成员
+向虚拟网卡team0中添加eth1网卡
+[root@server0 ~]# nmcli connection add type team-slave con-name team0-1 ifname eth1 master team0
+Connection 'team0-1' (bb2ed3b1-9fd2-4341-bd1b-0ceaada7ae6c) successfully added.
+向虚拟网卡team0中添加eth2网卡
+[root@server0 ~]# nmcli connection add type team-slave con-name team0-2 ifname eth2 master team0
+Connection 'team0-2' (1f347663-449b-44c1-acc6-580109c955d8) successfully added.
+
+3.为虚拟网卡team0配置ip
+[root@server0 ~]# nmcli connection modify team0 ipv4.method manual ipv4.addresses 172.25.0.211 connection.autoconnect yes
+
+4.激活配置
+激活顺序：虚拟网卡   虚拟网卡下的真实网卡
+查看虚拟网卡状态
+teamdctl 虚拟网卡名称 state
+teamdctl team0 state
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
