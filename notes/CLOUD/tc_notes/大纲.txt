@@ -1,0 +1,41 @@
+1 kvm 原理讲解
+  kvm 内核模块
+  qemu 硬件仿真
+  libvirt 用户接口管理
+  虚拟机的组成
+      硬盘文件
+      配置文件
+
+2 qemu-img  命令说明
+  虚拟机硬盘文件的创建
+  后端模板盘的使用
+
+3 虚拟机配置文件说明
+  内存,cpu,硬盘,网卡
+
+4 安装一个虚拟机
+  最小化安装，只分一个根分区
+
+5 把虚拟机配置成模板
+  禁用 selinux
+  删除 firewalld 和 NetworkManager
+  配置网卡
+  配置 yum 源
+  安装常用命令软件 ifconfig vim bridge-utils
+  打开 console 终端
+  配置硬盘 fstab，关闭不使用的服务
+  安装扩容软件
+
+6 清理日志信息
+7 创建虚拟机
+/var/lib/libvirt/images
+qemu-img create -f qcow2 -b node.img node1.img 20G
+
+cp nsd1808/node.xml /etc/libvirt/qemu/node1.xml
+修改 node1.xml 
+<name>xxxx</name>
+<source file ...... >
+
+virsh define  node1.xml
+virsh start   node1
+virsh console node1

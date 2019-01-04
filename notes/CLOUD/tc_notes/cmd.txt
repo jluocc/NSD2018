@@ -1,0 +1,5 @@
+rpm -qa |grep libvirt |xargs -i yum remove -y {}
+yum install -y qemu-kvm libvirt-daemon libvirt-client libvirt-daemon-driver-qemu libguestfs-tools-c virt-manager
+systemctl start libvirtd
+virt-sysprep -d node
+
